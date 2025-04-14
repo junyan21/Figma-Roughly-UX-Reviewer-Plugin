@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zakkuri-UX-Reviewer</title>
+  </head>
+  <body>
+    <div class="container">
+      <!-- ヘッダー -->
+      <header class="header">
+        <h1 class="title">Zakkuri UX Reviewer</h1>
+        <button id="settings-button" class="icon-button" title="設定">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="3"></circle>
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+            ></path>
+          </svg>
+        </button>
+      </header>
+
+      <!-- サーバー接続状態 -->
+      <div id="server-status" class="server-status server-status-disconnected">
+        <div class="server-status-indicator"></div>
+        <span id="server-status-text">サーバーに接続されていません</span>
+      </div>
+
+      <!-- メインコンテンツ -->
+      <main class="content">
+        <!-- レビュー開始セクション -->
+        <div id="review-start-section">
+          <p class="mb-4">Figmaレイヤーを選択して、UXレビューを開始してください。</p>
+          <button id="start-review-button" class="button button-primary">レビュー開始</button>
+        </div>
+
+        <!-- レビュー結果セクション -->
+        <div id="review-result-section" class="hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold">レビュー結果</h2>
+            <button id="copy-result-button" class="button button-secondary">結果をコピー</button>
+          </div>
+
+          <div id="review-result" class="review-result">
+            <!-- レビュー結果がここに表示されます -->
+          </div>
+        </div>
+
+        <!-- 追加質問セクション -->
+        <div id="chat-section" class="chat-container hidden">
+          <h2 class="text-lg font-bold mb-4">追加質問</h2>
+
+          <div id="chat-messages" class="chat-messages">
+            <!-- チャットメッセージがここに表示されます -->
+          </div>
+
+          <div class="chat-input-container">
+            <input
+              id="chat-input"
+              type="text"
+              class="input chat-input"
+              placeholder="質問を入力してください..."
+            />
+            <button id="chat-send-button" class="button button-primary">送信</button>
+          </div>
+        </div>
+      </main>
+
+      <!-- フッター -->
+      <footer class="footer">
+        <p>Powered by Claude API</p>
+      </footer>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div id="settings-modal" class="settings-container hidden">
+      <div class="settings-content">
+        <div class="settings-header">
+          <h2 class="settings-title">設定</h2>
+          <button id="settings-close" class="settings-close">&times;</button>
+        </div>
+
+        <form id="settings-form">
+          <div class="form-group">
+            <label for="server-url" class="label">サーバーURL</label>
+            <input type="text" id="server-url" class="input" placeholder="localhost" />
+          </div>
+
+          <div class="form-group">
+            <label for="server-port" class="label">ポート番号</label>
+            <input
+              type="number"
+              id="server-port"
+              class="input"
+              placeholder="3000"
+              min="1"
+              max="65535"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="model" class="label">Claudeモデル</label>
+            <select id="model" class="select">
+              <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+              <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+              <option value="claude-3-haiku-20240307" selected>Claude 3 Haiku</option>
+            </select>
+          </div>
+
+          <div class="settings-footer">
+            <button type="button" id="settings-cancel" class="button button-secondary">
+              キャンセル
+            </button>
+            <button type="submit" id="settings-save" class="button button-primary">保存</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ヘルプモーダル -->
+    <div id="help-modal" class="settings-container hidden">
+      <div class="settings-content">
+        <div class="settings-header">
+          <h2 class="settings-title">ヘルプ</h2>
+          <button id="help-close" class="settings-close">&times;</button>
+        </div>
+
+        <div class="mb-4">
+          <h3 class="font-bold mb-2">サーバーのセットアップ</h3>
+          <ol style="list-style-type: decimal; padding-left: 1.5rem">
+            <li class="mb-2">ターミナルを開き、以下のコマンドを実行してサーバーを起動します：</li>
+            <code class="block p-2 bg-gray-100 rounded mb-2">
+              cd server<br />
+              npm start -- --api-key=YOUR_API_KEY
+            </code>
+            <li class="mb-2">YOUR_API_KEYをあなたのClaude APIキーに置き換えてください。</li>
+          </ol>
+        </div>
+
+        <div class="mb-4">
+          <h3 class="font-bold mb-2">プラグインの使い方</h3>
+          <ol style="list-style-type: decimal; padding-left: 1.5rem">
+            <li class="mb-2">レビューしたいFigmaレイヤーを選択します。</li>
+            <li class="mb-2">「レビュー開始」ボタンをクリックします。</li>
+            <li class="mb-2">レビュー結果が表示されるまで待ちます。</li>
+            <li class="mb-2">必要に応じて追加質問を入力できます。</li>
+          </ol>
+        </div>
+
+        <div class="mb-4">
+          <h3 class="font-bold mb-2">トラブルシューティング</h3>
+          <ul style="list-style-type: disc; padding-left: 1.5rem">
+            <li class="mb-2">
+              サーバーに接続できない場合は、サーバーが起動しているか確認してください。
+            </li>
+            <li class="mb-2">APIキーが正しいか確認してください。</li>
+            <li class="mb-2">
+              ポート番号が他のアプリケーションと競合していないか確認してください。
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

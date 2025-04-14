@@ -1,0 +1,236 @@
+/* ボタン */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  height: 2.5rem;
+  padding: 0 var(--spacing-4);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.button-primary {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+}
+
+.button-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.button-secondary {
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.button-secondary:hover {
+  background-color: var(--card);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 入力フィールド */
+.input {
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 var(--spacing-3);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ラベル */
+.label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  margin-bottom: var(--spacing-2);
+}
+
+/* セレクト */
+.select {
+  display: block;
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 var(--spacing-3);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background-color: var(--background);
+  color: var(--foreground);
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--spacing-3) center;
+  background-size: 16px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+/* カード */
+.card {
+  background-color: var(--card);
+  border-radius: var(--radius);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-sm);
+}
+
+/* フォームグループ */
+.form-group {
+  margin-bottom: var(--spacing-4);
+}
+
+/* アイコンボタン */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: transparent;
+  color: var(--foreground);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover {
+  background-color: var(--card);
+}
+
+/* タブ */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-4);
+}
+
+.tab {
+  padding: var(--spacing-2) var(--spacing-4);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--foreground);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* レビュー結果 */
+.review-result {
+  margin-bottom: var(--spacing-4);
+}
+
+.review-result-summary {
+  font-size: var(--font-size-md);
+  margin-bottom: var(--spacing-4);
+  line-height: 1.5;
+}
+
+.review-result-section {
+  margin-bottom: var(--spacing-4);
+}
+
+.review-result-section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--spacing-2);
+}
+
+.review-result-list {
+  list-style-type: disc;
+  padding-left: var(--spacing-6);
+  margin-bottom: var(--spacing-4);
+}
+
+.review-result-list-item {
+  margin-bottom: var(--spacing-2);
+  line-height: 1.5;
+}
+
+.review-result-detail {
+  margin-bottom: var(--spacing-4);
+}
+
+.review-result-detail-title {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  margin-bottom: var(--spacing-2);
+}
+
+.review-result-detail-content {
+  line-height: 1.5;
+}
+
+/* チャット */
+.chat-container {
+  margin-top: var(--spacing-4);
+  border-top: 1px solid var(--border);
+  padding-top: var(--spacing-4);
+}
+
+.chat-messages {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: var(--spacing-4);
+}
+
+.chat-message {
+  margin-bottom: var(--spacing-3);
+  padding: var(--spacing-3);
+  border-radius: var(--radius);
+  line-height: 1.5;
+}
+
+.chat-message-user {
+  background-color: var(--primary);
+  color: white;
+  align-self: flex-end;
+}
+
+.chat-message-ai {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  align-self: flex-start;
+}
+
+.chat-input-container {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.chat-input {
+  flex: 1;
+}
