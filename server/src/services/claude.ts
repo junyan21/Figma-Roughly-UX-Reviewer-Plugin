@@ -39,7 +39,14 @@ class ClaudeService {
       });
 
       // レスポンスのパース
-      return this.parseReviewResponse(response.content[0].text);
+      // 新しいSDKでは、content[0]のtextプロパティが直接アクセスできないため、
+      // typeがtextのコンテンツブロックからテキストを取得する
+      const textBlock = response.content.find((block) => block.type === "text");
+      if (!textBlock || !("text" in textBlock)) {
+        throw new Error("テキストレスポンスが見つかりませんでした");
+      }
+
+      return this.parseReviewResponse(textBlock.text);
     } catch (error) {
       console.error("Claude APIエラー:", error);
       throw new Error("レビューの生成に失敗しました");
@@ -72,7 +79,14 @@ class ClaudeService {
         ],
       });
 
-      return response.content[0].text;
+      // 新しいSDKでは、content[0]のtextプロパティが直接アクセスできないため、
+      // typeがtextのコンテンツブロックからテキストを取得する
+      const textBlock = response.content.find((block) => block.type === "text");
+      if (!textBlock || !("text" in textBlock)) {
+        throw new Error("テキストレスポンスが見つかりませんでした");
+      }
+
+      return textBlock.text;
     } catch (error) {
       console.error("Claude APIエラー:", error);
       throw new Error("回答の生成に失敗しました");
