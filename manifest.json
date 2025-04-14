@@ -1,5 +1,5 @@
 {
-  "name": "Zakkuri-UX-Reviewer",
+  "name": "Zakkuri-UX-Reviewer-Test",
   "id": "1493649717445108650",
   "api": "1.0.0",
   "main": "dist/code.js",
@@ -10,6 +10,6 @@
   "ui": "dist/ui.html",
   "networkAccess": {
     "allowedDomains": ["http://localhost:3000"],
-    "reasoning": "このプラグインはローカルサーバーと通信してClaude APIを活用したUXレビュー機能を提供します。"
+    "reasoning": "このプラグインはローカルサーバーと通信してテストを行います。"
   }
 }

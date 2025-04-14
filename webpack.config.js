@@ -37,6 +37,7 @@ module.exports = (env, argv) => {
         filename: "ui.html",
         chunks: ["ui"],
         inject: "body",
+        scriptLoading: "blocking", // deferを使用せず、同期的にスクリプトを読み込む
       }),
     ],
   };
