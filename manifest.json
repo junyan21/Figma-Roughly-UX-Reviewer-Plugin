@@ -9,6 +9,7 @@
   "editorType": ["figma"],
   "ui": "dist/ui.html",
   "networkAccess": {
-    "allowedDomains": ["localhost:*"]
+    "allowedDomains": ["http://localhost:3000"],
+    "reasoning": "このプラグインはローカルサーバーと通信してClaude APIを活用したUXレビュー機能を提供します。"
   }
 }
