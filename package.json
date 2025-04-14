@@ -2,7 +2,7 @@
   "name": "Zakkuri-UX-Reviewer",
   "version": "1.0.0",
   "description": "Claude APIを活用して、選択したFigmaレイヤーのUXレビューを自動的に行うFigmaプラグイン",
-  "main": "code.js",
+  "main": "dist/code.js",
   "scripts": {
     "build": "webpack --mode=production",
     "dev": "webpack --mode=development --watch",

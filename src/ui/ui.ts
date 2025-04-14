@@ -109,15 +109,22 @@ function setupEventListeners() {
 
 // レビュー開始処理
 async function handleStartReview() {
+  console.log("🔍 レビュー開始ボタンがクリックされました");
+
   // ローディングインジケーターの表示
   loadingIndicator = showLoading(
     "レビュー中...",
     document.querySelector(".content") as HTMLElement
   );
+  console.log("🔍 ローディングインジケーターを表示しました");
+
   startReviewButton.disabled = true;
+  console.log("🔍 レビュー開始ボタンを無効化しました");
 
   // Figmaプラグインにレビュー開始メッセージを送信
+  console.log("🔍 Figmaプラグインにstart-reviewメッセージを送信します");
   parent.postMessage({ pluginMessage: { type: "start-review" } }, "*");
+  console.log("🔍 メッセージ送信完了");
 }
 
 // レビュー結果の表示
@@ -307,18 +314,34 @@ function updateSettingsForm() {
 
 // Figmaプラグインからのメッセージ処理
 window.onmessage = async (event) => {
+  console.log("🔍 Figmaプラグインからメッセージを受信しました", event.data);
+
   const message = event.data.pluginMessage;
-  if (!message) return;
+  if (!message) {
+    console.log("❌ 有効なプラグインメッセージではありません");
+    return;
+  }
+
+  console.log(`🔍 メッセージタイプ: ${message.type}`);
 
   switch (message.type) {
     case "review-data":
+      console.log("🔍 レビューデータを受信しました", message.layerInfo);
       try {
         // レビューリクエストの送信
+        console.log("🔍 レビューリクエストを送信します", {
+          layerInfo: message.layerInfo,
+          settings: currentSettings,
+        });
+
         const response = await sendReviewRequest(message.layerInfo, currentSettings);
+        console.log("🔍 レビューリクエストのレスポンス", response);
 
         if (response.success && response.data) {
+          console.log("✅ レビュー結果を表示します");
           displayReviewResult(response.data);
         } else {
+          console.error("❌ レビューリクエストが失敗しました", response.error);
           showError(
             response.error || "レビューの取得に失敗しました",
             document.querySelector(".content") as HTMLElement
@@ -330,6 +353,7 @@ window.onmessage = async (event) => {
           startReviewButton.disabled = false;
         }
       } catch (error) {
+        console.error("❌ レビューリクエスト中にエラーが発生しました", error);
         showError(
           "レビューの取得に失敗しました",
           document.querySelector(".content") as HTMLElement
@@ -343,6 +367,7 @@ window.onmessage = async (event) => {
       break;
 
     case "error":
+      console.error("❌ Figmaプラグインからエラーを受信しました", message.error);
       showError(message.error, document.querySelector(".content") as HTMLElement);
       if (loadingIndicator) {
         hideLoading(loadingIndicator);

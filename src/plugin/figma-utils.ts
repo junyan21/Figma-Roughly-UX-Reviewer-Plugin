@@ -53,28 +53,46 @@ export function extractLayerInfo(node: SceneNode): LayerInfo {
  * 選択されたノードの情報を取得する
  */
 export function getSelectedNodesInfo(): LayerInfo[] {
+  console.log("🔍 figma-utils: 選択されたノードの情報を取得します");
+
   const selectedNodes = figma.currentPage.selection;
+  console.log("🔍 figma-utils: 選択されたノード数", selectedNodes.length);
+
   if (selectedNodes.length === 0) {
+    console.error("❌ figma-utils: レイヤーが選択されていません");
     throw new Error("レイヤーが選択されていません");
   }
 
-  return selectedNodes.map((node) => extractLayerInfo(node));
+  console.log("🔍 figma-utils: 選択されたノードの詳細情報を抽出します");
+  const result = selectedNodes.map((node) => {
+    console.log(`🔍 figma-utils: ノード「${node.name}」(${node.type})の情報を抽出中`);
+    return extractLayerInfo(node);
+  });
+
+  console.log("🔍 figma-utils: ノード情報抽出完了", result.length + "個のノード情報");
+  return result;
 }
 
 /**
  * 選択されたノードのスクリーンショットを取得する（将来的な拡張用）
  */
 export async function getNodeScreenshot(node: SceneNode): Promise<Uint8Array | null> {
+  console.log(`🔍 figma-utils: ノード「${node.name}」のスクリーンショットを取得します`);
+
   if ("exportAsync" in node) {
     try {
-      return await node.exportAsync({
+      console.log("🔍 figma-utils: exportAsyncを実行します");
+      const result = await node.exportAsync({
         format: "PNG",
         constraint: { type: "SCALE", value: 2 },
       });
+      console.log("🔍 figma-utils: スクリーンショット取得成功", result.byteLength + "バイト");
+      return result;
     } catch (error) {
-      console.error("スクリーンショットの取得に失敗しました:", error);
+      console.error("❌ figma-utils: スクリーンショットの取得に失敗しました:", error);
       return null;
     }
   }
+  console.log("❌ figma-utils: このノードはexportAsyncをサポートしていません");
   return null;
 }
