@@ -8,7 +8,7 @@ module.exports = (env, argv) => {
     mode: argv.mode,
     devtool: isDevelopment ? "inline-source-map" : false,
     entry: {
-      ui: "./src/ui/ui.ts",
+      // ui.tsは使用せず、ui.htmlに直接スクリプトを埋め込む
       code: "./src/plugin/code.ts",
     },
     module: {
@@ -35,9 +35,8 @@ module.exports = (env, argv) => {
       new HtmlWebpackPlugin({
         template: "./src/ui/ui.html",
         filename: "ui.html",
-        chunks: ["ui"],
-        inject: "body",
-        scriptLoading: "blocking", // deferを使用せず、同期的にスクリプトを読み込む
+        chunks: [], // ui.tsのエントリーポイントを削除したため、chunksは空に
+        inject: false, // スクリプトは既にHTMLに埋め込まれているため、injectしない
       }),
     ],
   };

@@ -38,9 +38,125 @@
         <small>URL: http://localhost:3000</small>
       </div>
     </div>
-    <button id="test-button">テストメッセージ送信</button>
-    <textarea id="log-area" rows="10" cols="50" readonly></textarea>
+    <!-- チャット履歴表示エリア -->
+    <div
+      id="chat-history"
+      style="
+        height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        padding: 10px;
+      "
+    ></div>
+
+    <!-- チャット入力フォーム -->
+    <div style="display: flex; margin-bottom: 10px">
+      <textarea
+        id="chat-input"
+        rows="2"
+        style="flex-grow: 1; margin-right: 5px"
+        placeholder="メッセージを入力..."
+      ></textarea>
+      <button id="send-button" style="align-self: flex-end">送信</button>
+    </div>
+
+    <!-- 折りたたみ可能なログエリア -->
+    <details>
+      <summary style="cursor: pointer; padding: 5px; background-color: #f0f0f0; border-radius: 4px">
+        デバッグログを表示
+      </summary>
+      <textarea
+        id="log-area"
+        rows="6"
+        cols="50"
+        readonly
+        style="width: 100%; margin-top: 5px"
+      ></textarea>
+    </details>
+    <!-- JavaScriptを直接埋め込み -->
     <script>
+      // APIリクエスト関連の関数を直接定義
+      /**
+       * APIリクエストを送信する
+       */
+      async function sendApiRequest(endpoint, method, data, settings) {
+        console.log(`🔍 API: ${method} リクエスト開始 - ${endpoint}`);
+
+        try {
+          // 設定がない場合はデフォルト値を使用
+          const serverUrl = settings?.serverUrl || "localhost";
+          const port = settings?.port || 3000;
+          const url = `http://${serverUrl}:${port}${endpoint}`;
+          console.log(`🔍 API: リクエスト先URL - ${url}`);
+
+          // リクエストオプションのログ
+          const requestOptions = {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: method === "POST" ? JSON.stringify(data) : undefined,
+          };
+          console.log("🔍 API: リクエストオプション", requestOptions);
+
+          if (method === "POST" && data) {
+            console.log("🔍 API: 送信データ", data);
+          }
+
+          console.log("🔍 API: fetchリクエスト実行");
+          const response = await fetch(url, requestOptions);
+          console.log(`🔍 API: レスポンス受信 - ステータス: ${response.status}`);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ API: リクエスト失敗 - ${response.status} ${errorText}`);
+            throw new Error(`APIリクエストエラー: ${response.status} ${errorText}`);
+          }
+
+          console.log("🔍 API: レスポンスJSONをパース中");
+          const result = await response.json();
+          console.log("🔍 API: レスポンスデータ", result);
+
+          return {
+            success: true,
+            data: result,
+          };
+        } catch (error) {
+          console.error("❌ API: リクエストエラー:", error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : "不明なエラーが発生しました",
+          };
+        }
+      }
+
+      /**
+       * 追加質問リクエストを送信する
+       */
+      async function sendQuestionRequest(question, context, settings) {
+        console.log("🔍 API: 追加質問リクエスト開始");
+        console.log(`🔍 API: 質問 - ${question}`);
+        console.log(`🔍 API: 使用モデル - ${settings?.model || "claude-3-haiku-20240307"}`);
+
+        const result = await sendApiRequest(
+          "/ask",
+          "POST",
+          {
+            question,
+            context,
+            model: settings?.model || "claude-3-haiku-20240307",
+          },
+          settings
+        );
+
+        console.log("🔍 API: 追加質問リクエスト結果", result.success ? "成功" : "失敗");
+        return result;
+      }
+
+      // チャット履歴
+      let chatHistory = [];
+
       // デバッグ用のログ関数
       function log(message) {
         const logArea = document.getElementById("log-area");
@@ -50,112 +166,269 @@
         }
       }
 
-      // サーバー接続状態を更新する関数
-      function updateServerStatus(status, message) {
-        const indicator = document.getElementById("server-status-indicator");
-        const statusText = document.getElementById("server-status-text");
+      // チャットメッセージを表示する関数
+      function displayChatMessage(message) {
+        try {
+          log(`🔍 UI: チャットメッセージを表示します: ${JSON.stringify(message)}`);
 
-        // ステータスインジケーターのクラスをリセット
-        indicator.classList.remove("status-connected", "status-disconnected", "status-checking");
-
-        // 新しいステータスに応じてクラスを追加
-        if (status === "connected") {
-          indicator.classList.add("status-connected");
-          statusText.textContent = "サーバー接続状態: 接続済み";
-        } else if (status === "disconnected") {
-          indicator.classList.add("status-disconnected");
-          statusText.textContent = "サーバー接続状態: 未接続";
-          if (message) {
-            statusText.textContent += ` (${message})`;
+          const chatHistoryElement = document.getElementById("chat-history");
+          if (!chatHistoryElement) {
+            log(`❌ UI: チャット履歴要素が見つかりません`);
+            return;
           }
-        } else {
-          indicator.classList.add("status-checking");
-          statusText.textContent = "サーバー接続状態: 確認中...";
+
+          // メッセージ要素を作成
+          log(`🔍 UI: メッセージ要素を作成します`);
+          const messageElement = document.createElement("div");
+          messageElement.style.marginBottom = "10px";
+          messageElement.style.padding = "8px";
+          messageElement.style.borderRadius = "5px";
+          messageElement.style.maxWidth = "80%";
+          messageElement.style.wordBreak = "break-word";
+
+          // ユーザーとアシスタントでスタイルを変える
+          if (message.role === "user") {
+            messageElement.style.backgroundColor = "#e1f5fe";
+            messageElement.style.marginLeft = "auto";
+          } else {
+            messageElement.style.backgroundColor = "#f5f5f5";
+            messageElement.style.marginRight = "auto";
+          }
+
+          // メッセージ内容
+          const contentElement = document.createElement("div");
+          contentElement.textContent = message.content;
+          messageElement.appendChild(contentElement);
+
+          // タイムスタンプ
+          const timestampElement = document.createElement("div");
+          timestampElement.style.fontSize = "0.8em";
+          timestampElement.style.color = "#888";
+          timestampElement.textContent = message.timestamp.toLocaleTimeString();
+          messageElement.appendChild(timestampElement);
+
+          // チャット履歴に追加
+          log(`🔍 UI: チャット履歴にメッセージを追加します`);
+          chatHistoryElement.appendChild(messageElement);
+
+          // 自動スクロール
+          chatHistoryElement.scrollTop = chatHistoryElement.scrollHeight;
+
+          log(`🔍 UI: チャットメッセージの表示が完了しました`);
+        } catch (error) {
+          log(
+            `❌ UI: チャットメッセージ表示エラー: ${
+              error instanceof Error ? error.message : "不明なエラー"
+            }`
+          );
+          console.error("チャットメッセージ表示エラー:", error);
         }
       }
 
-      // サーバー接続状態を確認する関数
-      async function checkServerConnection() {
-        updateServerStatus("checking");
-        log("🔍 UI: サーバー接続状態を確認しています...");
-
+      // チャットメッセージを送信する関数
+      async function sendChatMessage(content) {
         try {
-          const response = await fetch("http://localhost:3000/status", {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-            },
-            mode: "cors",
-            cache: "no-cache",
-            timeout: 5000,
-          });
+          log(`🔍 UI: チャットメッセージ送信開始: ${content}`);
 
-          if (response.ok) {
-            const data = await response.json();
-            log(`🔍 UI: サーバー接続成功: ${JSON.stringify(data)}`);
-            updateServerStatus("connected");
-            return true;
-          } else {
-            log(`❌ UI: サーバー接続エラー: ${response.status} ${response.statusText}`);
-            updateServerStatus("disconnected", `${response.status} ${response.statusText}`);
-            return false;
+          if (!content.trim()) {
+            log(`❌ UI: 空のメッセージは送信できません`);
+            return;
+          }
+
+          // ユーザーメッセージをチャット履歴に追加
+          const userMessage = {
+            role: "user",
+            content,
+            timestamp: new Date(),
+          };
+
+          log(`🔍 UI: ユーザーメッセージをチャット履歴に追加します`);
+          chatHistory.push(userMessage);
+
+          // ユーザーメッセージを表示
+          log(`🔍 UI: ユーザーメッセージを表示します`);
+          try {
+            displayChatMessage(userMessage);
+          } catch (displayError) {
+            log(
+              `❌ UI: ユーザーメッセージ表示エラー: ${
+                displayError instanceof Error ? displayError.message : "不明なエラー"
+              }`
+            );
+            console.error("ユーザーメッセージ表示エラー:", displayError);
+          }
+
+          // 送信中の表示
+          const chatInput = document.getElementById("chat-input");
+          const sendButton = document.getElementById("send-button");
+
+          if (!chatInput || !sendButton) {
+            log(`❌ UI: チャット入力または送信ボタンの取得に失敗しました`);
+            return;
+          }
+
+          log(`🔍 UI: 送信中の表示に更新します`);
+          chatInput.disabled = true;
+          sendButton.disabled = true;
+          sendButton.textContent = "送信中...";
+
+          try {
+            // サーバーにリクエスト送信
+            log(`🔍 UI: サーバーにリクエストを送信します: ${content}`);
+            const response = await sendQuestionRequest(content, { chatHistory }, undefined);
+            log(`🔍 UI: サーバーからのレスポンス: ${JSON.stringify(response)}`);
+
+            // 入力欄と送信ボタンを元に戻す
+            log(`🔍 UI: 入力欄と送信ボタンを元に戻します`);
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            sendButton.textContent = "送信";
+            chatInput.value = "";
+            chatInput.focus();
+
+            if (response.success && response.data) {
+              // アシスタントの応答をチャット履歴に追加
+              const assistantMessage = {
+                role: "assistant",
+                content: response.data.answer,
+                timestamp: new Date(),
+              };
+
+              log(`🔍 UI: アシスタントメッセージをチャット履歴に追加します`);
+              chatHistory.push(assistantMessage);
+
+              // アシスタントメッセージを表示
+              log(`🔍 UI: アシスタントメッセージを表示します`);
+              try {
+                displayChatMessage(assistantMessage);
+              } catch (displayError) {
+                log(
+                  `❌ UI: アシスタントメッセージ表示エラー: ${
+                    displayError instanceof Error ? displayError.message : "不明なエラー"
+                  }`
+                );
+                console.error("アシスタントメッセージ表示エラー:", displayError);
+              }
+
+              log(`🔍 UI: アシスタント応答受信: ${response.data.answer}`);
+            } else {
+              // エラーメッセージをチャット履歴に追加
+              const errorMessage = {
+                role: "assistant",
+                content: `エラーが発生しました: ${response.error || "不明なエラー"}`,
+                timestamp: new Date(),
+              };
+
+              log(`🔍 UI: エラーメッセージをチャット履歴に追加します`);
+              chatHistory.push(errorMessage);
+
+              // エラーメッセージを表示
+              log(`🔍 UI: エラーメッセージを表示します`);
+              try {
+                displayChatMessage(errorMessage);
+              } catch (displayError) {
+                log(
+                  `❌ UI: エラーメッセージ表示エラー: ${
+                    displayError instanceof Error ? displayError.message : "不明なエラー"
+                  }`
+                );
+                console.error("エラーメッセージ表示エラー:", displayError);
+              }
+
+              log(`❌ UI: チャットリクエストエラー: ${response.error}`);
+            }
+          } catch (requestError) {
+            log(
+              `❌ UI: チャットリクエスト例外: ${
+                requestError instanceof Error ? requestError.message : "不明なエラー"
+              }`
+            );
+            console.error("チャットリクエスト例外:", requestError);
+
+            // エラーメッセージをチャット履歴に追加
+            const errorMessage = {
+              role: "assistant",
+              content: `エラーが発生しました: ${
+                requestError instanceof Error ? requestError.message : "不明なエラー"
+              }`,
+              timestamp: new Date(),
+            };
+
+            log(`🔍 UI: エラーメッセージをチャット履歴に追加します`);
+            chatHistory.push(errorMessage);
+
+            // エラーメッセージを表示
+            log(`🔍 UI: エラーメッセージを表示します`);
+            try {
+              displayChatMessage(errorMessage);
+            } catch (displayError) {
+              log(
+                `❌ UI: エラーメッセージ表示エラー: ${
+                  displayError instanceof Error ? displayError.message : "不明なエラー"
+                }`
+              );
+              console.error("エラーメッセージ表示エラー:", displayError);
+            }
+
+            // 入力欄と送信ボタンを元に戻す
+            chatInput.disabled = false;
+            sendButton.disabled = false;
+            sendButton.textContent = "送信";
           }
         } catch (error) {
-          log(`❌ UI: サーバー接続エラー: ${error.message}`);
-
-          // 接続拒否エラーの場合、サーバー起動方法を表示
-          if (
-            error.message.includes("Connection refused") ||
-            error.message.includes("Failed to fetch")
-          ) {
-            const errorMessage =
-              "サーバーが起動していません。以下のコマンドでサーバーを起動してください：";
-            const startCommand = "cd server && npm start -- --api-key=YOUR_API_KEY";
-            log(`❌ UI: ${errorMessage}`);
-            log(`🔧 UI: ${startCommand}`);
-            updateServerStatus("disconnected", "サーバーが起動していません");
-          } else {
-            updateServerStatus("disconnected", error.message);
-          }
-
-          return false;
+          log(
+            `❌ UI: チャットメッセージ送信関数でエラーが発生しました: ${
+              error instanceof Error ? error.message : "不明なエラー"
+            }`
+          );
+          console.error("チャットメッセージ送信関数でエラーが発生しました:", error);
         }
-      }
-
-      // 定期的にサーバー接続状態を確認
-      function startServerStatusCheck() {
-        // 初回確認
-        checkServerConnection();
-
-        // 10秒ごとに確認
-        setInterval(checkServerConnection, 10000);
       }
 
       // スクリプトが読み込まれたことをログに記録
       log("🔍 UI: スクリプトが読み込まれました");
 
-      // テストボタンの取得
-      const testButton = document.getElementById("test-button");
-      log("🔍 UI: テストボタンを取得しました: " + (testButton ? "成功" : "失敗"));
+      // チャット入力と送信ボタンのイベントリスナー設定
+      const chatInput = document.getElementById("chat-input");
+      const sendButton = document.getElementById("send-button");
 
-      // ボタンクリックイベントリスナーの設定
-      if (testButton) {
-        testButton.addEventListener("click", () => {
-          log("🔍 UI: テストボタンがクリックされました");
+      if (chatInput && sendButton) {
+        log("🔍 UI: チャット入力と送信ボタンを取得しました");
 
+        // 送信ボタンクリック時
+        sendButton.addEventListener("click", () => {
+          log("🔍 UI: 送信ボタンがクリックされました");
           try {
-            const message = { pluginMessage: { type: "test-message" } };
-            log(`🔍 UI: 送信するメッセージ: ${JSON.stringify(message)}`);
-
-            // Figmaプラグイン環境でのメッセージ送信
-            parent.postMessage(message, "*");
-            log("🔍 UI: parent.postMessageを使用してメッセージ送信完了");
+            sendChatMessage(chatInput.value);
           } catch (error) {
-            log(`❌ UI: メッセージ送信エラー: ${error}`);
+            log(
+              `❌ UI: 送信ボタンクリックエラー: ${
+                error instanceof Error ? error.message : "不明なエラー"
+              }`
+            );
+            console.error("送信ボタンクリックエラー:", error);
+          }
+        });
+
+        // Enterキー押下時（Shift+Enterは改行）
+        chatInput.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            log("🔍 UI: Enterキーが押されました");
+            event.preventDefault();
+            try {
+              sendChatMessage(chatInput.value);
+            } catch (error) {
+              log(
+                `❌ UI: Enterキー押下エラー: ${
+                  error instanceof Error ? error.message : "不明なエラー"
+                }`
+              );
+              console.error("Enterキー押下エラー:", error);
+            }
           }
         });
       } else {
-        log("❌ UI: テストボタンが見つかりません");
+        log("❌ UI: チャット入力または送信ボタンの取得に失敗しました");
       }
 
       // メッセージ受信イベントリスナーの設定
@@ -173,6 +446,75 @@
         log(`🔍 UI: pluginMessage: ${JSON.stringify(message)}`);
         log(`🔍 UI: メッセージタイプ: ${message.type}`);
       };
+
+      // サーバー接続状態の確認関数
+      async function checkServerConnection() {
+        const indicator = document.getElementById("server-status-indicator");
+        const statusText = document.getElementById("server-status-text");
+
+        if (!indicator || !statusText) return;
+
+        // ステータスインジケーターのクラスをリセット
+        indicator.classList.remove("status-connected", "status-disconnected", "status-checking");
+        indicator.classList.add("status-checking");
+        statusText.textContent = "サーバー接続状態: 確認中...";
+
+        log("🔍 UI: サーバー接続状態を確認しています...");
+
+        try {
+          const response = await fetch("http://localhost:3000/status", {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            mode: "cors",
+            cache: "no-cache",
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            log(`🔍 UI: サーバー接続成功: ${JSON.stringify(data)}`);
+            indicator.classList.add("status-connected");
+            statusText.textContent = "サーバー接続状態: 接続済み";
+            return true;
+          } else {
+            log(`❌ UI: サーバー接続エラー: ${response.status} ${response.statusText}`);
+            indicator.classList.add("status-disconnected");
+            statusText.textContent = `サーバー接続状態: 未接続 (${response.status} ${response.statusText})`;
+            return false;
+          }
+        } catch (error) {
+          log(
+            `❌ UI: サーバー接続エラー: ${error instanceof Error ? error.message : "不明なエラー"}`
+          );
+
+          // 接続拒否エラーの場合、サーバー起動方法を表示
+          const errorMessage = error instanceof Error ? error.message : "不明なエラー";
+          if (
+            errorMessage.includes("Connection refused") ||
+            errorMessage.includes("Failed to fetch")
+          ) {
+            log("❌ UI: サーバーが起動していません。以下のコマンドでサーバーを起動してください：");
+            log("🔧 UI: cd server && npm start -- --api-key=YOUR_API_KEY");
+            indicator.classList.add("status-disconnected");
+            statusText.textContent = "サーバー接続状態: 未接続 (サーバーが起動していません)";
+          } else {
+            indicator.classList.add("status-disconnected");
+            statusText.textContent = `サーバー接続状態: 未接続 (${errorMessage})`;
+          }
+
+          return false;
+        }
+      }
+
+      // 定期的にサーバー接続状態を確認
+      function startServerStatusCheck() {
+        // 初回確認
+        checkServerConnection();
+
+        // 10秒ごとに確認
+        setInterval(checkServerConnection, 10000);
+      }
 
       // サーバー接続状態の確認を開始
       startServerStatusCheck();
