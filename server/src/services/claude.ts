@@ -5,10 +5,10 @@ import { ReviewResult } from "../types/api";
 class ClaudeService {
   private client: Anthropic;
 
-  constructor() {
-    // APIキーはグローバル変数から取得
+  constructor(apiKey: string) {
+    // APIキーを引数から取得
     this.client = new Anthropic({
-      apiKey: global.apiKey,
+      apiKey: apiKey,
     });
   }
 
@@ -234,5 +234,7 @@ ${chatHistory}
   }
 }
 
-// シングルトンインスタンスをエクスポート
-export const claudeService = new ClaudeService();
+// サービスのファクトリー関数をエクスポート
+export function createClaudeService(apiKey: string): ClaudeService {
+  return new ClaudeService(apiKey);
+}

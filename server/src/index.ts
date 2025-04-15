@@ -3,8 +3,8 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { reviewRouter } from "./routes/review";
-import { askRouter } from "./routes/ask";
+import { createReviewRouter } from "./routes/review";
+import { createAskRouter } from "./routes/ask";
 import { statusRouter } from "./routes/status";
 import { parseArgs } from "node:util";
 
@@ -27,9 +27,6 @@ if (!apiKey) {
 // ポート番号の取得
 const port = parseInt(values["port"] as string, 10);
 
-// APIキーをグローバル変数として設定
-global.apiKey = apiKey;
-
 // Honoアプリケーションの作成
 const app = new Hono();
 
@@ -46,9 +43,9 @@ app.use(
   })
 );
 
-// ルーターの設定
-app.route("/review", reviewRouter);
-app.route("/ask", askRouter);
+// ルーターの設定（APIキーを渡す）
+app.route("/review", createReviewRouter(apiKey));
+app.route("/ask", createAskRouter(apiKey));
 app.route("/status", statusRouter);
 
 // 静的ファイルの提供（将来的な拡張用）
@@ -79,8 +76,3 @@ serve(
     console.log("Ctrl+Cで終了");
   }
 );
-
-// グローバル型定義
-declare global {
-  var apiKey: string;
-}
