@@ -233,3 +233,87 @@ body {
 .server-status-disconnected .server-status-indicator {
   background-color: rgb(220, 38, 38);
 }
+
+/* マークダウンスタイル */
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4,
+.markdown-content h5,
+.markdown-content h6 {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-weight: bold;
+}
+
+.markdown-content h1 {
+  font-size: 1.4em;
+}
+.markdown-content h2 {
+  font-size: 1.3em;
+}
+.markdown-content h3 {
+  font-size: 1.2em;
+}
+.markdown-content h4 {
+  font-size: 1.1em;
+}
+
+.markdown-content p {
+  margin-bottom: 0.5em;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content code {
+  font-family: monospace;
+  background-color: var(--figma-color-bg-tertiary);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.markdown-content pre {
+  background-color: var(--figma-color-bg-tertiary);
+  padding: 0.5em;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid var(--figma-color-border);
+  padding-left: 0.5em;
+  margin-left: 0.5em;
+  color: var(--figma-color-text-secondary);
+}
+
+.markdown-content a {
+  color: var(--figma-color-text-brand);
+  text-decoration: underline;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 0.5em;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid var(--figma-color-border);
+  padding: 0.3em 0.5em;
+}
+
+.markdown-content th {
+  background-color: var(--figma-color-bg-tertiary);
+}

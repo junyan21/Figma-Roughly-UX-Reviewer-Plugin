@@ -11,6 +11,7 @@ declare const styles: {
   readonly "hidden": string;
   readonly "items-center": string;
   readonly "justify-between": string;
+  readonly "markdown-content": string;
   readonly "mb-2": string;
   readonly "mb-4": string;
   readonly "mt-2": string;

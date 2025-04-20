@@ -23,7 +23,7 @@ export default function () {
     // 受信したメッセージに対する応答を送信
     try {
       figma.ui.postMessage({
-        type: "message-received",
+        type: "debug", // デバッグ用のタイプを追加
         originalType: "SEND_MESSAGE",
         timestamp: new Date().toISOString(),
         message: "メッセージを正常に受信しました",
