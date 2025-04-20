@@ -18,9 +18,18 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        handleSendMessage();
+      // 日本語入力の変換中は何もしない
+      if (event.isComposing) {
+        return;
+      }
+
+      if (event.key === "Enter") {
+        if (event.shiftKey) {
+          // Shift+Enterの場合は送信
+          event.preventDefault();
+          handleSendMessage();
+        }
+        // 通常のEnterは改行（デフォルト動作）
       }
     },
     [handleSendMessage]

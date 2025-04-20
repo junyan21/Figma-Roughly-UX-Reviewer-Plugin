@@ -93,9 +93,11 @@ export function ChatHistory({ messages }: ChatHistoryProps) {
                 marginRight: message.role === "user" ? "0" : "auto",
               }}
             >
-              {/* ユーザーメッセージはプレーンテキスト、アシスタントメッセージはマークダウンとして表示 */}
+              {/* ユーザーメッセージはプレーンテキスト（改行を保持）、アシスタントメッセージはマークダウンとして表示 */}
               {message.role === "user" ? (
-                <Text>{message.content}</Text>
+                <Text>
+                  <span style={{ whiteSpace: "pre-wrap" }}>{message.content}</span>
+                </Text>
               ) : (
                 <div
                   className="markdown-content"
