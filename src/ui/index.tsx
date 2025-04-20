@@ -1,5 +1,5 @@
 import { h } from "preact";
-import { render } from "@create-figma-plugin/ui";
+import { render, useWindowResize } from "@create-figma-plugin/ui";
 import { useCallback, useState } from "preact/hooks";
 import { emit, on } from "@create-figma-plugin/utilities";
 import { Container, VerticalSpace } from "@create-figma-plugin/ui";
@@ -12,6 +12,29 @@ import { sendQuestionRequest } from "../utils/api";
 function Plugin() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
+
+  // リサイズ後にスクロールを最下部に移動（最新メッセージを表示）
+  function scrollToBottom() {
+    setTimeout(() => {
+      const chatContainer = document.querySelector(".chat-history-container");
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 100);
+  }
+
+  // ウィンドウリサイズ処理
+  function onWindowResize(windowSize: { width: number; height: number }) {
+    emit("RESIZE_WINDOW", windowSize);
+    scrollToBottom();
+  }
+
+  useWindowResize(onWindowResize, {
+    minWidth: 450,
+    minHeight: 500,
+    maxWidth: 800,
+    maxHeight: 900,
+  });
 
   // メッセージ受信ハンドラーを設定
   on<MessageReceivedHandler>("MESSAGE_RECEIVED", (data) => {
@@ -105,6 +128,8 @@ function Plugin() {
           };
 
           setChatHistory((prev) => [...prev, assistantMessage]);
+          // 新しいメッセージが追加されたらスクロールを最下部に移動
+          scrollToBottom();
         } else {
           // エラーメッセージをチャット履歴に追加
           const errorMessage: ChatMessage = {
@@ -134,12 +159,29 @@ function Plugin() {
   );
 
   return (
-    <Container space="medium">
-      <VerticalSpace space="small" />
-      <ServerStatus />
-      <ChatHistory messages={chatHistory} />
-      <ChatInput onSendMessage={handleSendMessage} disabled={isSending} />
-    </Container>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
+      {/* ヘッダー部分（サーバーステータス） */}
+      <div style={{ flexShrink: 0 }}>
+        <ServerStatus />
+      </div>
+
+      {/* チャット履歴（可変サイズ、残りのスペースを埋める） */}
+      <div style={{ flexGrow: 1, overflow: "hidden" }}>
+        <ChatHistory messages={chatHistory} />
+      </div>
+
+      {/* 入力部分（下部に固定） */}
+      <div style={{ flexShrink: 0 }}>
+        <ChatInput onSendMessage={handleSendMessage} disabled={isSending} />
+      </div>
+    </div>
   );
 }
 

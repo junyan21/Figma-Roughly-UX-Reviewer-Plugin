@@ -14,11 +14,20 @@ export function ServerStatus() {
 
   useEffect(() => {
     const checkServer = async () => {
-      const result = await checkServerStatus();
-      setStatus({
-        connected: result.success,
-        checking: false,
-      });
+      try {
+        const result = await checkServerStatus();
+        console.log("サーバー接続状態:", result);
+        setStatus({
+          connected: result.success,
+          checking: false,
+        });
+      } catch (error) {
+        console.error("サーバー接続確認エラー:", error);
+        setStatus({
+          connected: false,
+          checking: false,
+        });
+      }
     };
 
     checkServer();
@@ -27,40 +36,41 @@ export function ServerStatus() {
   }, []);
 
   return (
-    <Container space="small">
+    <Container space="extraSmall">
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          padding: "4px",
+          justifyContent: "space-between",
+          padding: "8px",
           border: "1px solid var(--figma-color-border)",
           borderRadius: "2px",
+          marginBottom: "4px",
         }}
       >
-        <div
-          style={{
-            width: "12px",
-            height: "12px",
-            borderRadius: "50%",
-            marginRight: "5px",
-            backgroundColor: status.checking
-              ? "var(--figma-color-icon-warning)"
-              : status.connected
-              ? "var(--figma-color-icon-positive)"
-              : "var(--figma-color-icon-danger)",
-          }}
-        />
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <div
+            style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              marginRight: "8px",
+              backgroundColor: status.checking
+                ? "var(--figma-color-icon-warning)"
+                : status.connected
+                ? "var(--figma-color-icon-positive)"
+                : "var(--figma-color-icon-danger)",
+            }}
+          />
+          <Text>
+            サーバー接続状態:{" "}
+            {status.checking ? "確認中..." : status.connected ? "接続済み" : "未接続"}
+          </Text>
+        </div>
         <Text>
-          サーバー接続状態:{" "}
-          {status.checking ? "確認中..." : status.connected ? "接続済み" : "未接続"}
+          <span style={{ color: "var(--figma-color-text)" }}>http://localhost:3000</span>
         </Text>
       </div>
-      <Text align="center">
-        <span style={{ color: "var(--figma-color-text-secondary)" }}>
-          <small>URL: http://localhost:3000</small>
-        </span>
-      </Text>
-      <VerticalSpace space="small" />
     </Container>
   );
 }

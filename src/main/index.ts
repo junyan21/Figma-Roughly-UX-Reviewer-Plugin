@@ -1,8 +1,14 @@
-import { once, showUI } from "@create-figma-plugin/utilities";
+import { once, on, showUI } from "@create-figma-plugin/utilities";
 import { MessageReceivedHandler, SendMessageHandler } from "../utils/types";
 
 export default function () {
   console.log("🔍 Figmaプラグイン: 初期化開始");
+
+  // リサイズイベントのハンドラーを設定
+  on("RESIZE_WINDOW", function (windowSize: { width: number; height: number }) {
+    const { width, height } = windowSize;
+    figma.ui.resize(width, height);
+  });
 
   // UIを表示
   showUI({

@@ -27,8 +27,8 @@ export function ChatInput({ onSendMessage, disabled }: ChatInputProps) {
   );
 
   return (
-    <Container space="small">
-      <div style={{ display: "flex", alignItems: "flex-end" }}>
+    <Container space="extraSmall">
+      <div style={{ display: "flex", alignItems: "flex-end", padding: "4px 0" }}>
         <div style={{ flexGrow: 1, marginRight: "8px" }}>
           <TextboxMultiline
             onKeyDown={handleKeyDown}

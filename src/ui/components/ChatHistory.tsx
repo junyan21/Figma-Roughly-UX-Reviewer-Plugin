@@ -58,10 +58,11 @@ export function ChatHistory({ messages }: ChatHistoryProps) {
     }
   };
   return (
-    <Container space="small">
+    <Container space="extraSmall">
       <div
+        className="chat-history-container"
         style={{
-          height: "300px",
+          height: "100%",
           overflowY: "auto",
           border: "1px solid var(--figma-color-border)",
           borderRadius: "2px",
