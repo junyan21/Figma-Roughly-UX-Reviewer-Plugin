@@ -11,14 +11,15 @@
         border-radius: 50%;
         margin-right: 5px;
       }
+      /* サーバー接続状態を色で表示 */
       .status-connected {
-        background-color: #4caf50; /* 緑色 */
+        background-color: #4caf50; /* 接続成功: 緑色 */
       }
       .status-disconnected {
-        background-color: #f44336; /* 赤色 */
+        background-color: #f44336; /* 接続失敗: 赤色 */
       }
       .status-checking {
-        background-color: #ffc107; /* 黄色 */
+        background-color: #ffc107; /* 接続確認中: 黄色 */
       }
       .status-container {
         margin-bottom: 10px;
@@ -290,7 +291,7 @@
               // アシスタントの応答をチャット履歴に追加
               const assistantMessage = {
                 role: "assistant",
-                content: response.data.answer,
+                content: response.data.data.answer,
                 timestamp: new Date(),
               };
 
@@ -310,7 +311,7 @@
                 console.error("アシスタントメッセージ表示エラー:", displayError);
               }
 
-              log(`🔍 UI: アシスタント応答受信: ${response.data.answer}`);
+              log(`🔍 UI: アシスタント応答受信: ${response.data.data.answer}`);
             } else {
               // エラーメッセージをチャット履歴に追加
               const errorMessage = {
@@ -447,14 +448,20 @@
         log(`🔍 UI: メッセージタイプ: ${message.type}`);
       };
 
-      // サーバー接続状態の確認関数
+      /**
+       * サーバー接続状態の確認関数
+       * 接続状態に応じてインジケーターの色を変更します:
+       * - 確認中: 黄色
+       * - 接続成功: 緑色
+       * - 接続失敗: 赤色
+       */
       async function checkServerConnection() {
         const indicator = document.getElementById("server-status-indicator");
         const statusText = document.getElementById("server-status-text");
 
         if (!indicator || !statusText) return;
 
-        // ステータスインジケーターのクラスをリセット
+        // ステータスインジケーターのクラスをリセットして確認中(黄色)に設定
         indicator.classList.remove("status-connected", "status-disconnected", "status-checking");
         indicator.classList.add("status-checking");
         statusText.textContent = "サーバー接続状態: 確認中...";
@@ -474,11 +481,13 @@
           if (response.ok) {
             const data = await response.json();
             log(`🔍 UI: サーバー接続成功: ${JSON.stringify(data)}`);
+            // 接続成功時は緑色に変更
             indicator.classList.add("status-connected");
             statusText.textContent = "サーバー接続状態: 接続済み";
             return true;
           } else {
             log(`❌ UI: サーバー接続エラー: ${response.status} ${response.statusText}`);
+            // 接続失敗時は赤色に変更
             indicator.classList.add("status-disconnected");
             statusText.textContent = `サーバー接続状態: 未接続 (${response.status} ${response.statusText})`;
             return false;
@@ -496,9 +505,11 @@
           ) {
             log("❌ UI: サーバーが起動していません。以下のコマンドでサーバーを起動してください：");
             log("🔧 UI: cd server && npm start -- --api-key=YOUR_API_KEY");
+            // 接続失敗時は赤色に変更
             indicator.classList.add("status-disconnected");
             statusText.textContent = "サーバー接続状態: 未接続 (サーバーが起動していません)";
           } else {
+            // その他のエラーでも赤色に変更
             indicator.classList.add("status-disconnected");
             statusText.textContent = `サーバー接続状態: 未接続 (${errorMessage})`;
           }
