@@ -1,4 +1,4 @@
-import { ApiResponse, ReviewResult, Settings } from "../plugin/types";
+import { ApiResponse, ReviewResult, Settings } from "./types";
 
 /**
  * APIリクエストを送信する

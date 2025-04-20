@@ -1,14 +1,15 @@
 {
+  "extends": "@create-figma-plugin/tsconfig",
   "compilerOptions": {
     "target": "es2017",
     "lib": ["es2017", "dom"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    "strict": true,
     "jsx": "react",
-    "allowSyntheticDefaultImports": true,
-    "typeRoots": ["./node_modules/@types", "./node_modules/@figma"],
-    "outDir": "dist"
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
+    "moduleResolution": "node",
+    "typeRoots": ["node_modules/@figma", "node_modules/@types"],
+    "strict": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

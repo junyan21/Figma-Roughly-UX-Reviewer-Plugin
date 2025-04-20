@@ -1,0 +1,32 @@
+declare const styles: {
+  readonly "active": string;
+  readonly "button": string;
+  readonly "button-primary": string;
+  readonly "button-secondary": string;
+  readonly "card": string;
+  readonly "chat-container": string;
+  readonly "chat-input": string;
+  readonly "chat-input-container": string;
+  readonly "chat-message": string;
+  readonly "chat-message-ai": string;
+  readonly "chat-message-user": string;
+  readonly "chat-messages": string;
+  readonly "form-group": string;
+  readonly "icon-button": string;
+  readonly "input": string;
+  readonly "label": string;
+  readonly "review-result": string;
+  readonly "review-result-detail": string;
+  readonly "review-result-detail-content": string;
+  readonly "review-result-detail-title": string;
+  readonly "review-result-list": string;
+  readonly "review-result-list-item": string;
+  readonly "review-result-section": string;
+  readonly "review-result-section-title": string;
+  readonly "review-result-summary": string;
+  readonly "select": string;
+  readonly "tab": string;
+  readonly "tabs": string;
+};
+export = styles;
+

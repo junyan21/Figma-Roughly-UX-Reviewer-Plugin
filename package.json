@@ -2,23 +2,43 @@
   "name": "Zakkuri-UX-Reviewer",
   "version": "1.0.0",
   "description": "Claude APIを活用して、選択したFigmaレイヤーのUXレビューを自動的に行うFigmaプラグイン",
-  "main": "dist/code.js",
   "scripts": {
-    "build": "webpack --mode=production",
-    "dev": "webpack --mode=development --watch",
+    "build": "build-figma-plugin --typecheck --minify",
+    "dev": "build-figma-plugin --typecheck --watch",
     "lint": "eslint --ext .ts,.tsx --ignore-pattern node_modules .",
     "lint:fix": "eslint --ext .ts,.tsx --ignore-pattern node_modules --fix ."
+  },
+  "figma-plugin": {
+    "id": "1493649717445108650",
+    "name": "Zakkuri-UX-Reviewer-Test",
+    "main": "src/main/index.ts",
+    "ui": "src/ui/index.tsx",
+    "editorType": [
+      "figma"
+    ],
+    "networkAccess": {
+      "allowedDomains": [
+        "http://localhost:3000"
+      ],
+      "reasoning": "このプラグインはローカルサーバーと通信してテストを行います。"
+    }
   },
   "author": "",
   "license": "",
   "devDependencies": {
+    "@create-figma-plugin/build": "^3.2.1",
+    "@create-figma-plugin/tsconfig": "^4.0.0",
+    "@create-figma-plugin/ui": "^3.2.1",
+    "@create-figma-plugin/utilities": "^3.2.1",
     "@figma/eslint-plugin-figma-plugins": "*",
     "@figma/plugin-typings": "*",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
+    "create-figma-plugin": "^3.2.1",
     "css-loader": "^6.8.1",
     "eslint": "^8.54.0",
     "html-webpack-plugin": "^5.5.3",
+    "preact": "^10.15.1",
     "style-loader": "^3.3.3",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.2",

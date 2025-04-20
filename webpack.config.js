@@ -8,7 +8,7 @@ module.exports = (env, argv) => {
     mode: argv.mode,
     devtool: isDevelopment ? "inline-source-map" : false,
     entry: {
-      // ui.tsは使用せず、ui.htmlに直接スクリプトを埋め込む
+      ui: "./src/ui/index.tsx",
       code: "./src/plugin/code.ts",
     },
     module: {
@@ -20,7 +20,15 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.css$/,
-          use: ["style-loader", "css-loader"],
+          use: [
+            "style-loader",
+            {
+              loader: "css-loader",
+              options: {
+                importLoaders: 1,
+              },
+            },
+          ],
         },
       ],
     },
@@ -33,10 +41,10 @@ module.exports = (env, argv) => {
     },
     plugins: [
       new HtmlWebpackPlugin({
-        template: "./src/ui/ui.html",
+        template: "./src/ui/template.html",
         filename: "ui.html",
-        chunks: [], // ui.tsのエントリーポイントを削除したため、chunksは空に
-        inject: false, // スクリプトは既にHTMLに埋め込まれているため、injectしない
+        chunks: ["ui"],
+        inject: true,
       }),
     ],
   };

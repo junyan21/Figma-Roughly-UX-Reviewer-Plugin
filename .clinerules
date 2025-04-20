@@ -1,90 +1,94 @@
 # Zakkuri-UX-Reviewer 開発ルール
 
-## Figmaプラグイン UI初期化ルール
+## Figmaプラグイン開発ルール
 
-### 重要: UIの初期化処理はui.htmlに直接記述すること
+### 重要: create-figma-pluginフレームワークを使用すること
 
-- **必須**: FigmaプラグインのUIの初期化処理は、ui.htmlファイル内の`<script>`タグに直接記述すること
-- **禁止**: TypeScriptファイル（ui.ts）からのインポートや外部ファイルの参照に依存しないこと
-- **理由**: Figmaプラグインの仕様上、HTMLに直接JavaScriptを埋め込まないとプラグインが正常に動作しない
+- **必須**: Figmaプラグインの開発には、create-figma-pluginフレームワークを使用すること
+- **必須**: UIコンポーネントには@create-figma-plugin/uiライブラリを優先的に使用すること
+- **理由**: create-figma-pluginは、Figmaプラグイン開発における多くの一般的な問題を解決し、より保守性の高いコードベースを実現するため
 
-### 実装例
+### プロジェクト構成
 
-```html
-<!-- ui.html -->
-<script>
-  // UIの初期化処理を直接ここに記述する
-  // イベントリスナーの設定
-  document.getElementById('button').addEventListener('click', () => {
-    // 処理
-  });
+```
+src/
+├── main/ (プラグインのメインコード)
+│   ├── index.ts (エントリーポイント)
+│   └── utils/ (メインコンテキスト用ユーティリティ)
+├── ui/ (UIコード)
+│   ├── components/ (Preactコンポーネント)
+│   └── index.tsx (UIのエントリーポイント)
+└── utils/ (共通ユーティリティ)
+    ├── api.ts
+    └── types.ts
+```
+
+### 実装ガイドライン
+
+#### 1. メインコンテキスト (src/main/index.ts)
+
+```typescript
+import { once, showUI } from '@create-figma-plugin/utilities'
+import { UIEventHandler } from '../utils/types'
+
+export default function () {
+  // UIを表示
+  showUI({
+    width: 450,
+    height: 650
+  })
   
-  // Figmaプラグインとの通信
-  window.onmessage = (event) => {
-    if (event.data.pluginMessage) {
-      // メッセージ処理
-    }
-  };
-</script>
+  // UIからのメッセージを処理
+  once<UIEventHandler>('EVENT_NAME', function (data) {
+    // メッセージ処理
+  })
+}
+```
+
+#### 2. UIコンテキスト (src/ui/index.tsx)
+
+```tsx
+import { h } from 'preact'
+import { useCallback } from 'preact/hooks'
+import { emit } from '@create-figma-plugin/utilities'
+import { Button, Container, VerticalSpace } from '@create-figma-plugin/ui'
+
+function Plugin() {
+  const handleClick = useCallback(function () {
+    emit('EVENT_NAME', { /* データ */ })
+  }, [])
+  
+  return (
+    <Container space="medium">
+      <Button onClick={handleClick}>ボタン</Button>
+      <VerticalSpace space="small" />
+    </Container>
+  )
+}
+
+export default Plugin
 ```
 
 ### 技術的背景
 
-#### 1. Figmaプラグインの実行環境の特殊性
+#### 1. create-figma-pluginの利点
 
-- Figmaプラグインは2つの実行コンテキストで動作する：
-  - **メインコンテキスト**: Figmaのドキュメントにアクセスできるが、DOMにはアクセスできない
-  - **UIコンテキスト**: iframeとして実行され、DOMにアクセスできるが、Figmaのドキュメントには直接アクセスできない
-- これらのコンテキスト間の通信は`postMessage`APIを介して行われる
-- UIコンテキストの初期化タイミングは非常に重要で、外部ファイルの読み込みに依存すると初期化順序の問題が発生する
+- **UIとロジックの分離**: Preactを使用してUIコンポーネントとロジックを明確に分離
+- **型安全性**: TypeScriptの恩恵を最大限に活用
+- **ビルドプロセスの最適化**: esbuildによる高速なビルド
+- **Figmaデザインシステムとの一貫性**: @create-figma-plugin/uiコンポーネントによるFigmaライクなUI
+- **メッセージング**: 型安全なイベント駆動通信
 
-#### 2. ロード順序とタイミングの問題
+#### 2. @create-figma-plugin/uiコンポーネントの利点
 
-- 外部TypeScriptファイル（ui.ts）を使用すると、以下の問題が発生する可能性がある：
-  - TypeScriptファイルのコンパイル・バンドル後のコードが、想定通りのタイミングで実行されない
-  - 依存関係の解決に時間がかかり、Figmaプラグインのライフサイクルイベントを逃す
-  - 非同期ロードによる競合状態（race condition）が発生する
-
-#### 3. Webpackの設定と影響
-
-- 現在のwebpack.config.jsでは、以下の設定が行われている：
-  ```javascript
-  entry: {
-    // ui.tsは使用せず、ui.htmlに直接スクリプトを埋め込む
-    code: "./src/plugin/code.ts",
-  },
-  // ...
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: "./src/ui/ui.html",
-      filename: "ui.html",
-      chunks: [], // ui.tsのエントリーポイントを削除したため、chunksは空に
-      inject: false, // スクリプトは既にHTMLに埋め込まれているため、injectしない
-    }),
-  ],
-  ```
-- この設定は、ui.tsを使用せず、ui.htmlに直接スクリプトを埋め込む方針を明示している
-- `chunks: []`と`inject: false`の設定により、Webpackは自動的にバンドルされたJavaScriptをHTMLに注入しない
-
-#### 4. 実際に発生した問題
-
-- ui.tsを使用した場合、以下の問題が観察された：
-  - プラグイン起動時にUIが正しく初期化されないケースがある
-  - Figmaからのメッセージイベントが適切に処理されない
-  - サーバー接続状態の確認など、起動直後に実行されるべき処理が遅延または実行されない
-  - 特にFigmaのバージョンアップ後に互換性の問題が発生しやすい
-
-#### 5. パフォーマンスと信頼性への影響
-
-- HTMLに直接JavaScriptを埋め込むことで得られる利点：
-  - 初期化処理の実行順序が明確になる
-  - 外部ファイルの読み込み待ちによる遅延がなくなる
-  - Figmaプラグインのライフサイクルイベントを確実に捕捉できる
-  - ブラウザキャッシュの問題を回避できる
+- Figmaのデザインシステムに準拠したUIコンポーネント
+- ダークモードとライトモードの自動サポート
+- アクセシビリティに配慮された実装
+- 一貫性のあるUIを簡単に構築可能
 
 ### 注意点
 
-- ui.tsファイルが存在する場合でも、UIの初期化処理はui.htmlに直接記述すること
-- APIリクエストなどの共通機能も、可能な限りui.html内に直接実装すること
-- この方針は今後の変更でも必ず維持すること
-- 大規模なコードベースになった場合でも、モジュール分割はui.html内で行い、外部ファイルへの依存は避けること
+- create-figma-pluginの公式ドキュメントに従ってプロジェクトを構成すること
+- メインコンテキストとUIコンテキスト間の通信には、emit/onceなどのcreate-figma-pluginが提供するユーティリティを使用すること
+- UIコンポーネントは@create-figma-plugin/uiから提供されるものを優先的に使用し、Figmaのデザインシステムとの一貫性を保つこと
+- 大規模なコードベースでは、適切にコンポーネントを分割し、再利用可能なモジュールを作成すること
