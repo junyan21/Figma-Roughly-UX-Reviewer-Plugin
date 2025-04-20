@@ -48,7 +48,7 @@ export function getDefaultSettings(): Settings {
     apiKey: "",
     serverUrl: "localhost",
     port: 3000,
-    model: "claude-3-haiku-20240307",
+    model: "claude-3-7-sonnet-20250219",
   };
 }
 

@@ -13,12 +13,66 @@ class ClaudeService {
   }
 
   /**
+   * 利用可能なモデルリストを取得する
+   */
+  async fetchAvailableModels(): Promise<any[]> {
+    try {
+      // Anthropicクライアントを使用してモデルリストを取得
+      // クライアントライブラリがバージョンヘッダーを自動的に設定
+      const response = await this.client.models.list();
+
+      // created_atの新しい順（降順）にソート
+      const sortedModels = response.data.sort((a: any, b: any) => {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA; // 降順（新しい順）
+      });
+
+      return sortedModels.map((model: any) => ({
+        id: model.id,
+        name: model.display_name,
+        createdAt: model.created_at,
+        isDefault: model.id === "claude-3-7-sonnet-20250219", // デフォルトモデルを設定
+      }));
+    } catch (error) {
+      console.error("モデルリスト取得エラー:", error);
+      // エラー時はデフォルトのモデルリストを返す（こちらも新しい順に並べる）
+      return [
+        {
+          id: "claude-3-7-sonnet-20250219",
+          name: "Claude 3.7 Sonnet",
+          createdAt: "2025-02-19T00:00:00Z",
+          isDefault: true,
+        },
+        {
+          id: "claude-3-haiku-20240307",
+          name: "Claude 3 Haiku",
+          createdAt: "2024-03-07T00:00:00Z",
+          isDefault: false,
+        },
+        {
+          id: "claude-3-opus-20240229",
+          name: "Claude 3 Opus",
+          createdAt: "2024-02-29T00:00:00Z",
+          isDefault: false,
+        },
+        {
+          id: "claude-3-sonnet-20240229",
+          name: "Claude 3 Sonnet",
+          createdAt: "2024-02-29T00:00:00Z",
+          isDefault: false,
+        },
+      ];
+    }
+  }
+
+  /**
    * UXレビューを生成する
    */
   async generateReview(layerInfo: any, model?: string): Promise<ReviewResult> {
     try {
       // デフォルトモデルの設定
-      const selectedModel = model || "claude-3-haiku-20240307";
+      const selectedModel = model || "claude-3-7-sonnet-20250219";
 
       // プロンプトの生成
       const prompt = this.generateReviewPrompt(layerInfo);
@@ -59,7 +113,7 @@ class ClaudeService {
   async generateAnswer(question: string, context: any, model?: string): Promise<string> {
     try {
       // デフォルトモデルの設定
-      const selectedModel = model || "claude-3-haiku-20240307";
+      const selectedModel = model || "claude-3-7-sonnet-20250219";
 
       // プロンプトの生成
       const prompt = this.generateAnswerPrompt(question, context);

@@ -72,6 +72,24 @@ export async function checkServerStatus(
 }
 
 /**
+ * 利用可能なモデルリストを取得する
+ */
+export async function fetchAvailableModels(settings?: Settings): Promise<
+  ApiResponse<{
+    success: boolean;
+    data: Array<{ id: string; name: string; createdAt: string; isDefault: boolean }>;
+  }>
+> {
+  console.log("🔍 API: モデルリスト取得リクエスト開始");
+  const result = await sendApiRequest<{
+    success: boolean;
+    data: Array<{ id: string; name: string; createdAt: string; isDefault: boolean }>;
+  }>("/models", "GET", undefined, settings);
+  console.log("🔍 API: モデルリスト取得結果", result);
+  return result;
+}
+
+/**
  * UXレビューリクエストを送信する
  */
 export async function sendReviewRequest(
@@ -79,7 +97,7 @@ export async function sendReviewRequest(
   settings?: Settings
 ): Promise<ApiResponse<ReviewResult>> {
   console.log("🔍 API: UXレビューリクエスト開始");
-  console.log(`🔍 API: 使用モデル - ${settings?.model || "claude-3-haiku-20240307"}`);
+  console.log(`🔍 API: 使用モデル - ${settings?.model || "claude-3-7-sonnet-20250219"}`);
   console.log(`🔍 API: レイヤー情報 - ${layerInfo ? layerInfo.length + "個のノード" : "なし"}`);
 
   const result = await sendApiRequest<ReviewResult>(
@@ -87,7 +105,7 @@ export async function sendReviewRequest(
     "POST",
     {
       layerInfo,
-      model: settings?.model || "claude-3-haiku-20240307",
+      model: settings?.model || "claude-3-7-sonnet-20250219",
     },
     settings
   );
@@ -106,7 +124,7 @@ export async function sendQuestionRequest(
 ): Promise<ApiResponse<{ answer: string }>> {
   console.log("🔍 API: 追加質問リクエスト開始");
   console.log(`🔍 API: 質問 - ${question}`);
-  console.log(`🔍 API: 使用モデル - ${settings?.model || "claude-3-haiku-20240307"}`);
+  console.log(`🔍 API: 使用モデル - ${settings?.model || "claude-3-7-sonnet-20250219"}`);
 
   const result = await sendApiRequest<{ answer: string }>(
     "/ask",
@@ -114,7 +132,7 @@ export async function sendQuestionRequest(
     {
       question,
       context,
-      model: settings?.model || "claude-3-haiku-20240307",
+      model: settings?.model || "claude-3-7-sonnet-20250219",
     },
     settings
   );

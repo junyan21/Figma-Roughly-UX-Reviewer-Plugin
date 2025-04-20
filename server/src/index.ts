@@ -5,6 +5,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createReviewRouter } from "./routes/review";
 import { createAskRouter } from "./routes/ask";
+import { createModelsRouter } from "./routes/models";
 import { statusRouter } from "./routes/status";
 import { parseArgs } from "node:util";
 
@@ -46,6 +47,7 @@ app.use(
 // ルーターの設定（APIキーを渡す）
 app.route("/review", createReviewRouter(apiKey));
 app.route("/ask", createAskRouter(apiKey));
+app.route("/models", createModelsRouter(apiKey));
 app.route("/status", statusRouter);
 
 // 静的ファイルの提供（将来的な拡張用）
@@ -60,6 +62,7 @@ app.get("/", (c) => {
       { path: "/status", method: "GET", description: "サーバーの状態を取得" },
       { path: "/review", method: "POST", description: "UXレビューを実行" },
       { path: "/ask", method: "POST", description: "追加質問を送信" },
+      { path: "/models", method: "GET", description: "利用可能なモデルリストを取得" },
     ],
   });
 });
