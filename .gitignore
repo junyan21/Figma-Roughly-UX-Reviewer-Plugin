@@ -36,3 +36,12 @@ Thumbs.db
 # サーバー
 server/dist/
 server/node_modules/
+
+# バックアップファイルと一時ファイル
+*.bak
+*.backup
+*~
+*.tmp
+*.temp
+*.log
+*.old
