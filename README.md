@@ -1,4 +1,4 @@
-# Zakkuri-UX-Reviewer
+# Roughly-UX-Reviewer
 
 Claude API を活用して、選択した Figma レイヤーの UX レビューを自動的に行う Figma プラグイン
 
