@@ -54,7 +54,7 @@ app.use("*", serveStatic({ root: "./public" }));
 // ルートパス
 app.get("/", (c) => {
   return c.json({
-    message: "Zakkuri UX Reviewer API",
+    message: "Roughly UX Reviewer API",
     status: "running",
     endpoints: [
       { path: "/status", method: "GET", description: "サーバーの状態を取得" },

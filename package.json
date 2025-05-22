@@ -1,5 +1,5 @@
 {
-  "name": "Zakkuri-UX-Reviewer",
+  "name": "Roughly-UX-Reviewer",
   "version": "1.0.0",
   "description": "Claude APIを活用して、選択したFigmaレイヤーのUXレビューを自動的に行うFigmaプラグイン",
   "scripts": {
