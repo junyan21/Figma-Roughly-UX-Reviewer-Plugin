@@ -93,8 +93,6 @@ class ClaudeService {
       });
 
       // レスポンスのパース
-      // 新しいSDKでは、content[0]のtextプロパティが直接アクセスできないため、
-      // typeがtextのコンテンツブロックからテキストを取得する
       const textBlock = response.content.find((block) => block.type === "text");
       if (!textBlock || !("text" in textBlock)) {
         throw new Error("テキストレスポンスが見つかりませんでした");
@@ -151,8 +149,19 @@ class ClaudeService {
    * レビュー用のプロンプトを生成する
    */
   private generateReviewPrompt(layerInfo: any): string {
+    const layerUrls = Array.isArray(layerInfo)
+      ? layerInfo
+          .map((layer) => {
+            return `- ${layer.name}: ${layer.url || "不明"}`;
+          })
+          .join("\n")
+      : "情報なし";
+
     return `
 以下のFigmaレイヤー情報を分析し、ヤコブ・ニールセンの10ヒューリスティック原則に基づいてUXレビューを行ってください。
+
+## レイヤーURL
+${layerUrls}
 
 ## レイヤー情報
 ${JSON.stringify(layerInfo, null, 2)}
@@ -193,9 +202,17 @@ ${JSON.stringify(layerInfo, null, 2)}
       ? context.chatHistory.map((msg: any) => `${msg.role}: ${msg.content}`).join("\n")
       : "情報なし";
 
+    // レイヤー情報があれば追加
+    const layerInfo = context.selectedLayersInfo
+      ? JSON.stringify(context.selectedLayersInfo, null, 2)
+      : "情報なし";
+
     return `
 ## 質問
 ${question}
+
+## レイヤー情報
+${layerInfo}
 
 ## レビュー結果
 ${reviewResult}
@@ -285,6 +302,41 @@ ${chatHistory}
           エラー: "レスポンスのパースに失敗しました",
         },
       };
+    }
+  }
+
+  /**
+   * プロンプトを直接受け取ってUXレビューを生成する
+   */
+  async generateReviewWithPrompt(prompt: string, model?: string): Promise<ReviewResult> {
+    try {
+      const selectedModel = model || "claude-3-7-sonnet-20250219";
+
+      // Claude APIにリクエストを送信
+      const response = await this.client.messages.create({
+        model: selectedModel,
+        max_tokens: 4000,
+        temperature: 0.7,
+        system:
+          "あなたはUXデザインの専門家です。ヤコブ・ニールセンの10ヒューリスティック原則に基づいて、Figmaのデザインを分析し、具体的で実用的なフィードバックを提供してください。",
+        messages: [
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+      });
+
+      // typeがtextのコンテンツブロックからテキストを取得する
+      const textBlock = response.content.find((block) => block.type === "text");
+      if (!textBlock || !("text" in textBlock)) {
+        throw new Error("テキストレスポンスが見つかりませんでした");
+      }
+
+      return this.parseReviewResponse(textBlock.text);
+    } catch (error) {
+      console.error("Claude APIエラー(generateReviewWithPrompt):", error);
+      throw new Error("レビューの生成に失敗しました");
     }
   }
 }

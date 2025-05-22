@@ -1,1 +1,1 @@
-{"api":"1.0.0","editorType":["figma"],"id":"1493649717445108650","name":"Zakkuri-UX-Reviewer-Test","main":"build/main.js","ui":"build/ui.js","enablePrivatePluginApi":true,"networkAccess":{"allowedDomains":["http://localhost:3000"],"reasoning":"このプラグインはローカルサーバーと通信してテストを行います。"}}
+{"api":"1.0.0","editorType":["figma"],"id":"1493649717445108650","name":"Roughly-UX-Reviewer","main":"build/main.js","ui":"build/ui.js","enablePrivatePluginApi":true,"networkAccess":{"allowedDomains":["http://localhost:3000"],"reasoning":"このプラグインはローカルサーバーと通信してテストを行います。"}}

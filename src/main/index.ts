@@ -1,9 +1,8 @@
 import { once, on, showUI } from "@create-figma-plugin/utilities";
-import { MessageReceivedHandler, SendMessageHandler } from "../utils/types";
+import { MessageReceivedHandler, SendMessageHandler, StartReviewHandler } from "../utils/types";
+import { getSelectedNodesInfo } from "../plugin/figma-utils";
 
 export default function () {
-  console.log("🔍 Figmaプラグイン: 初期化開始");
-
   // リサイズイベントのハンドラーを設定
   on("RESIZE_WINDOW", function (windowSize: { width: number; height: number }) {
     const { width, height } = windowSize;
@@ -15,30 +14,83 @@ export default function () {
     width: 450,
     height: 650,
   });
-  console.log("🔍 Figmaプラグイン: UIを表示しました");
+
+  // 選択されたレイヤー情報を取得してUIに送信
+  try {
+    const selectedNodes = figma.currentPage.selection;
+    if (selectedNodes.length > 0) {
+      const selectedLayers = getSelectedNodesInfo();
+
+      // UIに選択されたレイヤー情報を送信
+      figma.ui.postMessage({
+        type: "SELECTED_LAYERS",
+        layers: selectedLayers,
+      });
+    } else {
+      // 選択されたノードがない場合も通知
+      figma.ui.postMessage({
+        type: "SELECTED_LAYERS",
+        layers: [],
+      });
+    }
+  } catch (error) {
+    // エラーメッセージをUIに送信
+    figma.ui.postMessage({
+      type: "SELECTED_LAYERS_ERROR",
+      message: error instanceof Error ? error.message : "レイヤー情報の取得に失敗しました",
+    });
+  }
+
+  // レイヤー選択変更イベントのハンドラーを設定
+  figma.on("selectionchange", function () {
+    try {
+      const selectedLayers = getSelectedNodesInfo();
+
+      // UIに選択されたレイヤー情報を送信
+      figma.ui.postMessage({
+        type: "SELECTED_LAYERS",
+        layers: selectedLayers,
+      });
+    } catch (error) {
+      // エラーメッセージをUIに送信
+      figma.ui.postMessage({
+        type: "SELECTED_LAYERS_ERROR",
+        message: error instanceof Error ? error.message : "レイヤー情報の取得に失敗しました",
+      });
+    }
+  });
+
+  // レビュー開始イベントのハンドラーを設定
+  on<StartReviewHandler>("START_REVIEW", function () {
+    try {
+      const selectedLayers = getSelectedNodesInfo();
+
+      // UIにレビュー用のレイヤー情報を送信
+      figma.ui.postMessage({
+        type: "REVIEW_LAYERS",
+        layers: selectedLayers,
+      });
+    } catch (error) {
+      // エラーメッセージをUIに送信
+      figma.ui.postMessage({
+        type: "REVIEW_LAYERS_ERROR",
+        message: error instanceof Error ? error.message : "レイヤー情報の取得に失敗しました",
+      });
+    }
+  });
 
   // UIからのメッセージを処理
-  once<SendMessageHandler>("SEND_MESSAGE", function (data) {
-    console.log("🔍 Figmaプラグイン: UIからメッセージを受信しました", data);
-    console.log("🔍 Figmaプラグイン: メッセージタイプ: SEND_MESSAGE");
-    console.log("🔍 Figmaプラグイン: メッセージの完全な内容:", JSON.stringify(data));
-
-    // メッセージの受信時刻を記録（デバッグ用）
-    console.log("🔍 Figmaプラグイン: メッセージ受信時刻:", new Date().toISOString());
-
+  on<SendMessageHandler>("SEND_MESSAGE", function (data) {
     // 受信したメッセージに対する応答を送信
     try {
       figma.ui.postMessage({
-        type: "debug", // デバッグ用のタイプを追加
+        type: "debug",
         originalType: "SEND_MESSAGE",
         timestamp: new Date().toISOString(),
         message: "メッセージを正常に受信しました",
       });
-      console.log("🔍 Figmaプラグイン: 応答メッセージを送信しました");
     } catch (error) {
-      console.error("❌ Figmaプラグイン: 応答メッセージの送信に失敗しました", error);
+      // エラー時は何もしない
     }
   });
-
-  console.log("🔍 Figmaプラグイン: 初期化完了");
 }

@@ -5,9 +5,10 @@ import { marked } from "marked"; // マークダウンライブラリをイン�
 
 interface ChatHistoryProps {
   messages: ChatMessage[];
+  onReviewClick?: () => void; // レビューリンククリック時のコールバック
 }
 
-export function ChatHistory({ messages }: ChatHistoryProps) {
+export function ChatHistory({ messages, onReviewClick }: ChatHistoryProps) {
   // マークダウンをHTMLに変換する関数
   const renderMarkdown = (content: string) => {
     try {
@@ -41,10 +42,20 @@ export function ChatHistory({ messages }: ChatHistoryProps) {
 
       // 文字列型の強制
       const contentStr = String(processedContent);
-      console.log("マークダウン変換前の最終コンテンツ:", contentStr);
+
+      // レビューリンクとレイヤーリンクの処理
+      const processedStr = contentStr
+        .replace(
+          /\[レビューを開始する\]\(#review\)/g,
+          '<a href="#" class="review-link">レビューを開始する</a>'
+        )
+        .replace(
+          /\[([^\]]+)\]\(#layer-([^)]+)\)/g,
+          '<a href="#layer-$2" class="layer-link">$1</a>'
+        );
 
       // markedを同期的に使用するようにオプションを設定
-      const html = marked.parse(contentStr, {
+      const html = marked.parse(processedStr, {
         async: false,
         breaks: true,
         gfm: true,
@@ -57,6 +68,27 @@ export function ChatHistory({ messages }: ChatHistoryProps) {
       return { __html: typeof content === "string" ? content : String(content || "") };
     }
   };
+  // レビューリンクとレイヤーリンクのクリックイベントを処理
+  const handleClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+
+    // レビューリンクのクリック処理
+    if (target.classList.contains("review-link")) {
+      event.preventDefault();
+      if (onReviewClick) {
+        onReviewClick();
+      }
+    }
+
+    // レイヤーリンクのクリック処理
+    const layerLinkMatch = target.getAttribute("href")?.match(/#layer-(.+)/);
+    if (layerLinkMatch && layerLinkMatch[1]) {
+      event.preventDefault();
+      // ここでレイヤーIDを使った処理を行う（例：Figmaでそのレイヤーを選択する）
+      // 現時点では、レイヤーIDをコンソールに出力するだけ
+    }
+  };
+
   return (
     <Container space="extraSmall">
       <div
@@ -68,6 +100,7 @@ export function ChatHistory({ messages }: ChatHistoryProps) {
           borderRadius: "2px",
           padding: "8px",
         }}
+        onClick={handleClick}
       >
         {messages.length === 0 ? (
           <Text align="center">

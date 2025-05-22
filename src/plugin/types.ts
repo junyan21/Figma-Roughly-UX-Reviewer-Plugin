@@ -29,6 +29,7 @@ export interface LayerInfo {
   type: string;
   visible: boolean;
   locked: boolean;
+  url?: string; // URLフィールドを追加
   children?: LayerInfo[];
   // 視覚的特性
   fills?: any[];

@@ -10,7 +10,7 @@
   },
   "figma-plugin": {
     "id": "1493649717445108650",
-    "name": "Zakkuri-UX-Reviewer-Test",
+    "name": "Roughly-UX-Reviewer",
     "main": "src/main/index.ts",
     "ui": "src/ui/index.tsx",
     "editorType": [

@@ -86,3 +86,15 @@ export interface MessageReceivedHandler extends EventHandler {
     message: string;
   };
 }
+
+export interface StartReviewHandler extends EventHandler {
+  name: "START_REVIEW";
+  handler: () => void;
+}
+
+export interface SelectedLayersHandler extends EventHandler {
+  name: "SELECTED_LAYERS";
+  data: {
+    layers: LayerInfo[];
+  };
+}

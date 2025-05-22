@@ -3,7 +3,6 @@ import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { createReviewRouter } from "./routes/review";
 import { createAskRouter } from "./routes/ask";
 import { createModelsRouter } from "./routes/models";
 import { statusRouter } from "./routes/status";
@@ -45,7 +44,6 @@ app.use(
 );
 
 // ルーターの設定（APIキーを渡す）
-app.route("/review", createReviewRouter(apiKey));
 app.route("/ask", createAskRouter(apiKey));
 app.route("/models", createModelsRouter(apiKey));
 app.route("/status", statusRouter);
@@ -60,7 +58,6 @@ app.get("/", (c) => {
     status: "running",
     endpoints: [
       { path: "/status", method: "GET", description: "サーバーの状態を取得" },
-      { path: "/review", method: "POST", description: "UXレビューを実行" },
       { path: "/ask", method: "POST", description: "追加質問を送信" },
       { path: "/models", method: "GET", description: "利用可能なモデルリストを取得" },
     ],
@@ -68,14 +65,12 @@ app.get("/", (c) => {
 });
 
 // サーバーの起動
-console.log(`サーバーを起動しています... (ポート: ${port})`);
 serve(
   {
     fetch: app.fetch,
     port,
   },
   (info) => {
-    console.log(`サーバーが起動しました: http://localhost:${info.port}`);
-    console.log("Ctrl+Cで終了");
+    // サーバー起動時のログを削除
   }
 );
