@@ -1,7 +1,7 @@
 import { Settings } from "../plugin/types";
 
 // ストレージキー
-const SETTINGS_KEY = "zakkuri-ux-reviewer-settings";
+const SETTINGS_KEY = "Roughly-ux-reviewer-settings";
 
 /**
  * 設定をクライアントストレージに保存する
