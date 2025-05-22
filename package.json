@@ -16,6 +16,7 @@
     "editorType": [
       "figma"
     ],
+    "enablePrivatePluginApi": true,
     "networkAccess": {
       "allowedDomains": [
         "http://localhost:3000"
