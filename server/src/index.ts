@@ -70,7 +70,5 @@ serve(
     fetch: app.fetch,
     port,
   },
-  (info) => {
-    // サーバー起動時のログを削除
-  }
+  (info) => {}
 );

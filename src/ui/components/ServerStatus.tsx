@@ -16,13 +16,11 @@ export function ServerStatus() {
     const checkServer = async () => {
       try {
         const result = await checkServerStatus();
-        console.log("サーバー接続状態:", result);
         setStatus({
           connected: result.success,
           checking: false,
         });
       } catch (error) {
-        console.error("サーバー接続確認エラー:", error);
         setStatus({
           connected: false,
           checking: false,

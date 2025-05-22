@@ -25,24 +25,16 @@ export function SettingsDialog({
   const [selectedModel, setSelectedModel] = useState(settings.model);
   const [error, setError] = useState<string | null>(null);
 
-  // デバッグログの追加
-  useEffect(() => {
-    console.log("モデルリスト状態:", models);
-    console.log("選択中のモデル:", selectedModel);
-  }, [models, selectedModel]);
-
   // モデルリストの取得
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
       setError(null);
-      console.log("モデルリスト取得開始");
 
       fetchAvailableModels(settings)
         .then((response) => {
-          if (response.success && response.data && response.data.data) {
+          if (response.success && response.data?.data) {
             const modelList = response.data.data;
-            console.log("取得したモデルリスト:", modelList);
 
             if (modelList.length === 0) {
               setError("モデルリストが空です");
@@ -50,34 +42,24 @@ export function SettingsDialog({
             } else {
               setModels(modelList);
 
-              // 現在選択されているモデルがリストにない場合はデフォルトを選択
+              // 現在選択されているモデルがリストにない場合は適切なモデルを選択
               if (!modelList.some((model) => model.id === selectedModel)) {
-                console.log("選択中のモデルがリストにありません:", selectedModel);
-                // デフォルトモデルを探す
-                const defaultModel = modelList.find((model) => model.isDefault);
-                // デフォルトモデルが見つからない場合は最初のモデルを選択
-                if (defaultModel) {
-                  console.log("デフォルトモデルを選択:", defaultModel.id);
-                  setSelectedModel(defaultModel.id);
-                } else if (modelList.length > 0) {
-                  console.log("最初のモデルを選択:", modelList[0].id);
-                  setSelectedModel(modelList[0].id);
-                }
+                const defaultModel = modelList.find((model) => model.isDefault) || modelList[0];
+                setSelectedModel(defaultModel.id);
               }
             }
           } else {
             setError("モデルリストの取得に失敗しました");
           }
         })
-        .catch((error) => {
-          console.error("モデルリスト取得エラー:", error);
+        .catch(() => {
           setError("モデルリストの取得中にエラーが発生しました");
         })
         .finally(() => {
           setLoading(false);
         });
     }
-  }, [isOpen, settings]);
+  }, [isOpen, settings, selectedModel]);
 
   // 設定を保存
   const handleSave = () => {

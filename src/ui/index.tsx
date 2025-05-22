@@ -18,51 +18,59 @@ function Plugin() {
   const [selectedLayers, setSelectedLayers] = useState<any[]>([]);
   const [serverStatus, setServerStatus] = useState<string>("確認中...");
 
+  // レイヤー情報を表示する共通関数
+  const displayLayerInfo = useCallback((layers: any[]) => {
+    const layerMessage: ChatMessage = {
+      role: "assistant",
+      content:
+        layers.length > 0
+          ? `レイヤーが選択されています。レビューしますか？\n\n**選択レイヤー**: ${layers
+              .map((l) => `[${l.name}](#layer-${l.id})`)
+              .join(", ")}\n\n[レビューを開始する](#review)`
+          : "レビュー対象のレイヤーのURLを入力してください。",
+      timestamp: new Date(),
+    };
+
+    setChatHistory((prev) => {
+      // 既存のレイヤー情報メッセージを探す
+      const existingLayerMsgIndex = prev.findIndex(
+        (msg) =>
+          msg.role === "assistant" &&
+          (msg.content.includes("レイヤーが選択されています") ||
+            msg.content.includes("レビュー対象のレイヤーのURL"))
+      );
+
+      // サーバー接続メッセージの位置を探す
+      const serverMsgIndex = prev.findIndex(
+        (msg) =>
+          msg.role === "assistant" &&
+          (msg.content.includes("サーバーに接続しました") ||
+            msg.content.includes("サーバーに接続できませんでした"))
+      );
+
+      if (existingLayerMsgIndex >= 0) {
+        // 既存のレイヤー情報メッセージを更新
+        const newHistory = [...prev];
+        newHistory[existingLayerMsgIndex] = layerMessage;
+        return newHistory;
+      } else if (serverMsgIndex >= 0) {
+        // サーバー接続メッセージの直後に挿入
+        const newHistory = [...prev];
+        newHistory.splice(serverMsgIndex + 1, 0, layerMessage);
+        return newHistory;
+      } else {
+        // 新しいメッセージを追加
+        return [...prev, layerMessage];
+      }
+    });
+  }, []);
+
   // レイヤー情報を強制的に表示する関数
   const forceDisplayLayerInfo = useCallback(() => {
     if (selectedLayers.length > 0) {
-      const layerMessage: ChatMessage = {
-        role: "assistant",
-        content: `レイヤーが選択されています。レビューしますか？\n\n**選択レイヤー**: ${selectedLayers
-          .map((l) => `[${l.name}](#layer-${l.id})`)
-          .join(", ")}\n\n[レビューを開始する](#review)`,
-        timestamp: new Date(),
-      };
-
-      setChatHistory((prev) => {
-        // 既存のレイヤー情報メッセージを探す
-        const existingLayerMsgIndex = prev.findIndex(
-          (msg) =>
-            msg.role === "assistant" &&
-            (msg.content.includes("レイヤーが選択されています") ||
-              msg.content.includes("レビュー対象のレイヤーのURL"))
-        );
-
-        // サーバー接続メッセージの位置を探す
-        const serverMsgIndex = prev.findIndex(
-          (msg) =>
-            msg.role === "assistant" &&
-            (msg.content.includes("サーバーに接続しました") ||
-              msg.content.includes("サーバーに接続できませんでした"))
-        );
-
-        if (existingLayerMsgIndex >= 0) {
-          // 既存のレイヤー情報メッセージを更新
-          const newHistory = [...prev];
-          newHistory[existingLayerMsgIndex] = layerMessage;
-          return newHistory;
-        } else if (serverMsgIndex >= 0) {
-          // サーバー接続メッセージの直後に挿入
-          const newHistory = [...prev];
-          newHistory.splice(serverMsgIndex + 1, 0, layerMessage);
-          return newHistory;
-        } else {
-          // 新しいメッセージを追加
-          return [...prev, layerMessage];
-        }
-      });
+      displayLayerInfo(selectedLayers);
     }
-  }, [selectedLayers]);
+  }, [selectedLayers, displayLayerInfo]);
 
   // 初期化時の処理
   useEffect(() => {
@@ -172,51 +180,7 @@ function Plugin() {
       // 選択されたレイヤー情報を処理
       if (data.type === "SELECTED_LAYERS") {
         setSelectedLayers(data.layers);
-
-        // レイヤー情報メッセージをチャット履歴に追加
-        const layerMessage: ChatMessage = {
-          role: "assistant",
-          content:
-            data.layers.length > 0
-              ? `レイヤーが選択されています。レビューしますか？\n\n**選択レイヤー**: ${data.layers
-                  .map((l: any) => `[${l.name}](#layer-${l.id})`)
-                  .join(", ")}\n\n[レビューを開始する](#review)`
-              : "レビュー対象のレイヤーのURLを入力してください。",
-          timestamp: new Date(),
-        };
-
-        setChatHistory((prev) => {
-          // 既存のレイヤー情報メッセージを探す
-          const existingLayerMsgIndex = prev.findIndex(
-            (msg) =>
-              msg.role === "assistant" &&
-              (msg.content.includes("レイヤーが選択されています") ||
-                msg.content.includes("レビュー対象のレイヤーのURL"))
-          );
-
-          // サーバー接続メッセージの位置を探す
-          const serverMsgIndex = prev.findIndex(
-            (msg) =>
-              msg.role === "assistant" &&
-              (msg.content.includes("サーバーに接続しました") ||
-                msg.content.includes("サーバーに接続できませんでした"))
-          );
-
-          if (existingLayerMsgIndex >= 0) {
-            // 既存のレイヤー情報メッセージを更新
-            const newHistory = [...prev];
-            newHistory[existingLayerMsgIndex] = layerMessage;
-            return newHistory;
-          } else if (serverMsgIndex >= 0) {
-            // サーバー接続メッセージの直後に挿入
-            const newHistory = [...prev];
-            newHistory.splice(serverMsgIndex + 1, 0, layerMessage);
-            return newHistory;
-          } else {
-            // 新しいメッセージを追加
-            return [...prev, layerMessage];
-          }
-        });
+        displayLayerInfo(data.layers);
       }
       // レイヤー選択エラーを処理
       else if (data.type === "SELECTED_LAYERS_ERROR") {
@@ -257,7 +221,22 @@ function Plugin() {
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [serverStatus, chatHistory, selectedLayers]);
+  }, [serverStatus, chatHistory, selectedLayers, displayLayerInfo]);
+
+  // エラーメッセージを作成する共通関数
+  const createErrorMessage = useCallback((message: string): ChatMessage => {
+    return {
+      role: "assistant",
+      content: message,
+      timestamp: new Date(),
+    };
+  }, []);
+
+  // チャット履歴を更新する共通関数
+  const updateChatHistory = useCallback((message: ChatMessage) => {
+    setChatHistory((prev) => [...prev, message]);
+    scrollToBottom();
+  }, []);
 
   // レビュー開始処理
   const handleStartReview = async (layers: any[]) => {
@@ -267,13 +246,9 @@ function Plugin() {
 
     // サーバー接続状態を確認
     if (serverStatus !== "接続済み") {
-      // サーバー未接続時のメッセージ
-      const errorMessage: ChatMessage = {
-        role: "assistant",
-        content: "サーバーに接続できません。サーバーが起動しているか確認してください。",
-        timestamp: new Date(),
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
+      updateChatHistory(
+        createErrorMessage("サーバーに接続できません。サーバーが起動しているか確認してください。")
+      );
       return;
     }
 
@@ -289,7 +264,7 @@ function Plugin() {
       content: `レイヤーのレビューを開始\n\n${layerInfoText}`,
       timestamp: new Date(),
     };
-    setChatHistory((prev) => [...prev, userMessage]);
+    updateChatHistory(userMessage);
     setIsSending(true);
 
     try {
@@ -303,25 +278,18 @@ function Plugin() {
           content: formatReviewResult(response.data),
           timestamp: new Date(),
         };
-        setChatHistory((prev) => [...prev, assistantMessage]);
-        scrollToBottom();
+        updateChatHistory(assistantMessage);
       } else {
-        // エラーメッセージをチャット履歴に追加
-        const errorMessage: ChatMessage = {
-          role: "assistant",
-          content: `エラーが発生しました: ${response.error || "不明なエラー"}`,
-          timestamp: new Date(),
-        };
-        setChatHistory((prev) => [...prev, errorMessage]);
+        updateChatHistory(
+          createErrorMessage(`エラーが発生しました: ${response.error || "不明なエラー"}`)
+        );
       }
     } catch (error) {
-      // エラーメッセージをチャット履歴に追加
-      const errorMessage: ChatMessage = {
-        role: "assistant",
-        content: `エラーが発生しました: ${error instanceof Error ? error.message : "不明なエラー"}`,
-        timestamp: new Date(),
-      };
-      setChatHistory((prev) => [...prev, errorMessage]);
+      updateChatHistory(
+        createErrorMessage(
+          `エラーが発生しました: ${error instanceof Error ? error.message : "不明なエラー"}`
+        )
+      );
     } finally {
       setIsSending(false);
     }
@@ -374,7 +342,7 @@ function Plugin() {
         timestamp: new Date(),
       };
 
-      setChatHistory((prev) => [...prev, userMessage]);
+      updateChatHistory(userMessage);
       setIsSending(true);
 
       // プラグインのメインコンテキストにメッセージを送信
@@ -448,35 +416,23 @@ function Plugin() {
             timestamp: new Date(),
           };
 
-          setChatHistory((prev) => [...prev, assistantMessage]);
-          // 新しいメッセージが追加されたらスクロールを最下部に移動
-          scrollToBottom();
+          updateChatHistory(assistantMessage);
         } else {
-          // エラーメッセージをチャット履歴に追加
-          const errorMessage: ChatMessage = {
-            role: "assistant",
-            content: `エラーが発生しました: ${response.error || "不明なエラー"}`,
-            timestamp: new Date(),
-          };
-
-          setChatHistory((prev) => [...prev, errorMessage]);
+          updateChatHistory(
+            createErrorMessage(`エラーが発生しました: ${response.error || "不明なエラー"}`)
+          );
         }
       } catch (error) {
-        // エラーメッセージをチャット履歴に追加
-        const errorMessage: ChatMessage = {
-          role: "assistant",
-          content: `エラーが発生しました: ${
-            error instanceof Error ? error.message : "不明なエラー"
-          }`,
-          timestamp: new Date(),
-        };
-
-        setChatHistory((prev) => [...prev, errorMessage]);
+        updateChatHistory(
+          createErrorMessage(
+            `エラーが発生しました: ${error instanceof Error ? error.message : "不明なエラー"}`
+          )
+        );
       } finally {
         setIsSending(false);
       }
     },
-    [isSending, chatHistory, settings]
+    [isSending, chatHistory, settings, updateChatHistory, createErrorMessage]
   );
 
   return (

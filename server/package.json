@@ -1,5 +1,5 @@
 {
-  "name": "zakkuri-ux-reviewer-server",
+  "name": "roughly-ux-reviewer-server",
   "version": "1.0.0",
   "description": "Claude APIを活用したUXレビュープラグイン用プロキシサーバー",
   "main": "dist/index.js",

@@ -6,67 +6,85 @@ import { LayerInfo } from "./types";
  */
 // ファイルURLの情報を保持するグローバル変数
 let cachedFileId: string | null = null;
-let cachedFileName: string | null = null;
 let pendingUrlRequests: Map<string, ((url: string) => void)[]> = new Map();
+
+// URLを生成する共通関数
+function generateFigmaUrl(fileId: string, fileName: string, nodeId: string): string {
+  const encodedFileName = encodeURIComponent(fileName).replace(/%20/g, "-");
+  const nodeIdForUrl = nodeId.replace(/:/g, "-");
+  return `https://www.figma.com/file/${fileId}/${encodedFileName}?node-id=${nodeIdForUrl}`;
+}
 
 // UIからのメッセージを処理するハンドラーを設定
 figma.ui.onmessage = (msg) => {
   if (msg.type === "FILE_URL_INFO") {
     // キャッシュを更新
     cachedFileId = msg.fileId;
-    cachedFileName = msg.fileName;
 
     // このノードIDに対する保留中のリクエストがあれば解決
     const nodeId = msg.nodeId;
     if (pendingUrlRequests.has(nodeId)) {
       const callbacks = pendingUrlRequests.get(nodeId) || [];
-      const url = `https://www.figma.com/file/${msg.fileId}/${encodeURIComponent(
-        msg.fileName
-      ).replace(/%20/g, "-")}?node-id=${nodeId}`;
-
+      const url = generateFigmaUrl(msg.fileId, msg.fileName, nodeId);
       callbacks.forEach((callback) => callback(url));
       pendingUrlRequests.delete(nodeId);
     }
   }
 };
 
+/**
+ * ノードのURLを取得する
+ */
+export async function getNodeUrl(nodeId: string): Promise<string> {
+  try {
+    // キャッシュされたファイルIDがあれば使用
+    if (cachedFileId) {
+      // ファイル名は直接figmaから取得
+      const fileName = figma.root.name;
+      return generateFigmaUrl(cachedFileId, fileName, nodeId);
+    } else {
+      // キャッシュがない場合は新しいリクエストを作成
+      return new Promise((resolve) => {
+        pendingUrlRequests.set(nodeId, [resolve]);
+        figma.ui.postMessage({
+          type: "GET_FILE_URL_INFO",
+          nodeId,
+        });
+      });
+    }
+  } catch (error) {
+    console.error("URL取得エラー:", error);
+    return "";
+  }
+}
+
 export function extractLayerInfo(node: SceneNode): LayerInfo {
   // 基本情報
-  // Figmaファイルの正しいURLを生成
   let url = "";
 
-  // ノードIDをハイフン形式に変換（Figma URLの形式に合わせる）
-  const nodeIdForUrl = node.id.replace(":", "-");
-
   try {
-    // キャッシュされたファイルIDとファイル名があれば使用
-    if (cachedFileId && cachedFileName) {
-      const encodedFileName = encodeURIComponent(cachedFileName).replace(/%20/g, "-");
-      url = `https://www.figma.com/file/${cachedFileId}/${encodedFileName}?node-id=${nodeIdForUrl}`;
+    // キャッシュされたファイルIDがあれば使用
+    if (cachedFileId) {
+      const fileName = figma.root.name;
+      url = generateFigmaUrl(cachedFileId, fileName, node.id);
     } else {
       // UIにファイルIDリクエストを送信
       figma.ui.postMessage({
         type: "GET_FILE_ID",
-        nodeId: nodeIdForUrl,
+        nodeId: node.id,
       });
 
       // 一時的なURLを設定（後でUIからの応答で更新される）
-      url = `https://www.figma.com/file/unknown/Untitled?node-id=${nodeIdForUrl}`;
+      url = `https://www.figma.com/file/unknown/Untitled?node-id=${node.id.replace(/:/g, "-")}`;
 
       // このノードIDに対する保留中のリクエストを登録
-      if (!pendingUrlRequests.has(nodeIdForUrl)) {
-        pendingUrlRequests.set(nodeIdForUrl, []);
+      if (!pendingUrlRequests.has(node.id)) {
+        pendingUrlRequests.set(node.id, []);
       }
-
-      // 非同期処理のためのプロミスを作成（実際の実装では使用しない）
-      // この部分は実際には非同期で更新されるが、現在の関数は同期的に値を返す必要がある
-      pendingUrlRequests.get(nodeIdForUrl)?.push((updatedUrl) => {
-        // 実際のコードでは何もしない（非同期更新のため）
-      });
     }
   } catch (error) {
     // エラー時のフォールバック
-    url = `https://www.figma.com/file/unknown/Untitled?node-id=${nodeIdForUrl}`;
+    url = `https://www.figma.com/file/unknown/Untitled?node-id=${node.id.replace(/:/g, "-")}`;
   }
 
   const info: LayerInfo = {
@@ -79,7 +97,6 @@ export function extractLayerInfo(node: SceneNode): LayerInfo {
     y: "y" in node ? node.y : undefined,
     width: "width" in node ? node.width : undefined,
     height: "height" in node ? node.height : undefined,
-    // Figmaのノード参照URLを追加
     url: url,
   };
 
@@ -101,7 +118,6 @@ export function extractLayerInfo(node: SceneNode): LayerInfo {
   // テキスト情報
   if (node.type === "TEXT") {
     info.characters = node.characters;
-    // fontSize は any 型として扱う
     info.fontSize = node.fontSize as any;
     info.fontName = JSON.parse(JSON.stringify(node.fontName));
   }
